@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from backend import schemas, models
 from backend.database import get_db, engine
 from backend.auth import email_utils, auth
-from backend.config import SECRET_KEY
+from backend.config import SECRET_KEY, REDIS_HOST, REDIS_PORT
 from backend.celery_app import celery
 from sqlalchemy import func, or_, desc
 from sqlalchemy.orm import Session, selectinload
@@ -38,7 +38,7 @@ app.mount("/media", StaticFiles(directory="backend/media"), name="media")
 async def startup_event():
     global redis_client
     try:
-        redis_client = redis.Redis(host="localhost", port=6379, db=0)
+        redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
         pong = await redis_client.ping()
         if pong:
             celery.send_task("backend.tasks.hotel_rating")

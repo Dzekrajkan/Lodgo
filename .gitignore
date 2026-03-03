@@ -3,7 +3,7 @@ __pycache__
 
 media
 
-.env
+backend/.env
 
 # Logs
 logs
