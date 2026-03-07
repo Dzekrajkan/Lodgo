@@ -132,11 +132,7 @@ class Facility(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
 
-    hotels = relationship(
-        "Hotel",
-        secondary=hotel_facilities,
-        back_populates="facilities",
-    )
+    hotels = relationship("Hotel", secondary=hotel_facilities, back_populates="facilities",)
 
 class Service(Base):
     __tablename__ = "services"

@@ -25,9 +25,9 @@ function Hotels() {
       date_from_u: string | null,
       date_to_u: string | null,
       guests_u: number | null
-
     }
-    const hotelsToRender = hotels.length > 0 ? hotels : allHotels
+    const [activeFilter, setActiveFilter] = useState(false)
+    const hotelsToRender = activeFilter ? hotels : allHotels
 
     useEffect(() => {
       const fetch = async () => {
@@ -98,14 +98,14 @@ function Hotels() {
       let filtered = [...allHotels]
 
       if (stars > 0) {
-        console.log(allHotels.map(h => ({id: h.id, rating: h.rating})))
-        filtered = filtered.filter(hotel => hotel.rating >= stars)
+        filtered = filtered.filter(hotel => hotel.rating >= Number(stars))
       }
 
       if (activeFacilities.length > 0) {
         filtered = filtered.filter(hotel => activeFacilities.every(f => hotel.facilities.some(hf => hf.id === f)))
       }
- 
+
+      setActiveFilter(true)
       setHotels(filtered)
     }
 
@@ -161,20 +161,20 @@ function Hotels() {
                 <div className="bg-white/4 p-4 rounded-lg flex flex-col gap-4">
                   <h4>Filters</h4>
                   <div>
-                    <label htmlFor="" className="text-sm text-white/80">Price ($)</label>
+                    <label className="text-sm text-white/80">Price ($)</label>
                     <div className="flex gap-4 mt-2">
                       <div className="flex flex-col">
-                        <label htmlFor="">From</label>
-                        <input type="number" className="w-30 mt-2 border border-white/10 rounded-sm no-spin appearance-none"/>
+                        <label className="text-xs text-white/80">From</label>
+                          <input type="number" className="w-30 mt-2 border border-white/10 rounded-sm no-spin appearance-none"/>
                       </div>
                       <div className="flex flex-col"> 
-                        <label htmlFor="">To</label>
-                        <input type="number" className="w-30 mt-2 border border-white/10 rounded-sm no-spin appearance-none"/>
+                        <label className="text-xs text-white/80">To</label>
+                          <input type="number" className="w-30 mt-2 border border-white/10 rounded-sm no-spin appearance-none"/>
                       </div>
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="" className="text-sm text-white/80">Star Rating</label>
+                    <label className="text-sm text-white/80">Star Rating</label>
                     <div className="flex mt-4 gap-2">
                       <button className={`px-2 py-1 rounded-md border border-white text-sm ${stars == 5 && "bg-white/15"} `} type="button" onClick={() => setStars(5)}>5★</button>
                       <button className={`px-2 py-1 rounded-md border border-white text-sm ${stars == 4 && "bg-white/15"} `} type="button" onClick={() => setStars(4)}>4★+</button>
@@ -182,10 +182,10 @@ function Hotels() {
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="" className="text-sm text-white/80">Facilities</label>
+                    <label className="text-sm text-white/80">Facilities</label>
                     <div className="grid grid-cols-2 mt-4 gap-2 text-sm text-white/80">
                       {facilities.map(facilitie => (
-                      <label htmlFor="" className="flex items-center gap-2" key={facilitie.id}>
+                      <label className="flex items-center gap-2" key={facilitie.id}>
                         <input type="checkbox" onChange={() => addFacilities(facilitie.id)} />{facilitie.name}
                       </label>
                       ))}
@@ -193,7 +193,7 @@ function Hotels() {
                   </div>
                   <div>
                     <button className="w-full bg-blue-500/20 hover:bg-blue-500/40 py-2 rounded-lg transition mb-3 mt-2" type="submit">Apply</button>
-                    <button className="w-full border border-white/10 py-2 rounded-lg transition" type="button" onClick={() => { setStars(0), setHotels([])}}>Reset Filters</button>
+                    <button className="w-full border border-white/10 py-2 rounded-lg transition" type="button" onClick={() => { setStars(0), setHotels([]), setActiveFilter(false)}}>Reset Filters</button>
                   </div>
                 </div>
               </form>

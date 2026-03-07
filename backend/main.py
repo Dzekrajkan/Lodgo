@@ -42,9 +42,9 @@ async def startup_event():
         pong = await redis_client.ping()
         if pong:
             celery.send_task("backend.tasks.hotel_rating")
-            print("✅ Redis подключение установлено")
+            print("✅ Redis connection established")
         else:
-            print("⚠️ Redis подключен но не отвечает на ping")
+            print("⚠️ Redis connected but not responding to ping")
     except Exception as e:
         redis_client = None
         print(f"❌Error: {e}")
@@ -56,7 +56,7 @@ async def shutdown_event():
         try:
             await redis_client.close()
             await redis_client.connection_pool.disconnect()
-            print("🔘 Redis соединение закрыто")
+            print("🔘 Redis connection closed")
         except asyncio.CancelledError:
             print("⚠️ Shutdown прерван CancelledError")
 
@@ -178,7 +178,7 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
 
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
-        raise HTTPException("Такого юзера не существует")
+        raise HTTPException("This user does not exist.")
     user.is_verified = True
     db.commit()
 
@@ -220,56 +220,56 @@ def post_service(service: schemas.ServiceCreate, db: Session = Depends(get_db)):
 async def get_hotels(db: Session = Depends(get_db)):
     hotels = db.query(models.Hotel).options(selectinload(models.Hotel.facilities), selectinload(models.Hotel.images)).all()
     for hotel in hotels:
-        reting = None
+        rating = None
         try:
             if redis_client:
                 rating = await redis_client.get(f"hotel:{hotel.id}:rating")
         except Exception:
-            reting = None
-        if reting == None:
+            rating = None
+        if rating == None:
             reviews = db.query(models.Review).filter(models.Review.hotel_id == hotel.id).all()
             if reviews:
-                reting = sum(review.rating for review in reviews) / len(reviews)
+                rating = sum(review.rating for review in reviews) / len(reviews)
             else:
-                reting = 0
+                rating = 0
             try:
                 if redis_client:
-                    await redis_client.set(f"hotel:{hotel.id}:reting", rating)
+                    await redis_client.set(f"hotel:{hotel.id}:rating", rating)
             except Exception:
                 pass
         else:
-            reting = float(reting)
-        hotel.rating = reting
+            rating = float(rating)
+        hotel.rating = rating
     return hotels
 
 @app.get("/api/hotels/search", response_model=list[schemas.HotelOut])
 async def search_hotels(city: str = Query(...), date_from: date = Query(...), date_to: date = Query(...), guests: int = Query(..., ge=1), db: Session = Depends(get_db)):
     if date_from >= date_to:
-        raise HTTPException(400, "Введите коректную дату")
+        raise HTTPException(400, "Please enter a valid date")
     busy_room_ids = db.query(models.Booking.room_id, func.count(models.Booking.id).label("booked_count")).filter(models.Booking.status.in_([models.BookingStatus.pending, models.BookingStatus.confirmed]), models.Booking.date_from < date_to, models.Booking.date_to > date_from).group_by(models.Booking.room_id).subquery()
     available_rooms = db.query(models.Room).join(models.Hotel).outerjoin(busy_room_ids, models.Room.id == busy_room_ids.c.room_id).filter(models.Hotel.city == city, models.Room.capacity == guests, or_(busy_room_ids.c.booked_count == None, busy_room_ids.c.booked_count < models.Room.quantity)).subquery()
     hotels = db.query(models.Hotel).join(available_rooms, models.Hotel.id == available_rooms.c.hotel_id).distinct().options(selectinload(models.Hotel.rooms), selectinload(models.Hotel.images)).all()
     for hotel in hotels:
-        reting = None
+        rating = None
         try:
             if redis_client:
                 rating = await redis_client.get(f"hotel:{hotel.id}:rating")
         except Exception:
-            reting = None
-        if reting == None:
+            rating = None
+        if rating == None:
             reviews = db.query(models.Review).filter(models.Review.hotel_id == hotel.id).all()
             if reviews:
-                reting = sum(review.rating for review in reviews) / len(reviews)
+                rating = sum(review.rating for review in reviews) / len(reviews)
             else:
-                reting = 0
+                rating = 0
             try:
                 if redis_client:
-                    await redis_client.set(f"hotel:{hotel.id}:reting", rating)
+                    await redis_client.set(f"hotel:{hotel.id}:rating", rating)
             except Exception:
                 pass
         else:
-            reting = float(reting)
-        hotel.rating = reting
+            rating = float(rating)
+        hotel.rating = rating
     return hotels
 
 @app.get("/api/hotels/{hotel_id}", response_model=schemas.HotelOut)
@@ -308,7 +308,7 @@ async def get_hotel(hotel_id: int = Path(...), db: Session = Depends(get_db)):
     hotel.images = images
     hotel.services = services
     if not hotel:
-        raise HTTPException(400, "Такого отеля не существует")
+        raise HTTPException(400, "Such a hotel does not exist.")
     return hotel
 
 @app.post("/api/hotels")
@@ -318,9 +318,9 @@ def create_hotel(hotel: schemas.HotelCreate, db: Session = Depends(get_db)):
     service_ids = hotel.service_ids
     services = db.query(models.Service).filter(models.Service.id.in_(service_ids)).all()
     if len(facilities) != len(set(facility_ids)):
-        raise HTTPException(status_code=400, detail="Одно или несколько удобств не найдено")
+        raise HTTPException(status_code=400, detail="One or more amenities were not found.")
     if len(services) != len(set(service_ids)):
-        raise HTTPException(status_code=400, detail="Один или несколько сервисов не найдено")
+        raise HTTPException(status_code=400, detail="One or more services were not found.")
     new_hotel = models.Hotel(
         owner_id=hotel.owner_id,
         name=hotel.name,
@@ -347,7 +347,7 @@ def post_images_hotels(hotel_id: int = Path(...), is_main: bool = Query(...), fi
     if is_main:
         main_image = db.query(models.HotelImage).filter(models.HotelImage.hotel_id == hotel_id, models.HotelImage.is_main == True).all()
         if main_image:
-            raise HTTPException(400, "Главное изобаражение отеля уже существует")
+            raise HTTPException(400, "The main image of the hotel already exists")
     folder = f"backend/media/hotels/{hotel_id}"
     os.makedirs(folder, exist_ok=True)
     file_path = f"{folder}/{file.filename}"
@@ -369,7 +369,7 @@ def post_images_hotels(hotel_id: int = Path(...), is_main: bool = Query(...), fi
 def get_rooms(hotel_id: int = Path(...), date_from: date = Query(...), date_to: date = Query(...), guests: int = Query(..., ge=1),  db: Session = Depends(get_db)):
     hotel = db.query(models.Hotel).filter(models.Hotel.id == hotel_id).first()
     if not hotel:
-        raise HTTPException(400, "Такого отеля нету")
+        raise HTTPException(400, "There is no such hotel")
     busy_room_ids = db.query(models.Booking.room_id, func.count(models.Booking.id).label("booked_count")).filter(models.Booking.status.in_([models.BookingStatus.pending, models.BookingStatus.confirmed]), models.Booking.date_from < date_to, models.Booking.date_to > date_from).group_by(models.Booking.room_id).subquery()
     rooms = db.query(models.Room, (models.Room.quantity - func.coalesce(busy_room_ids.c.booked_count, 0)).label("available_count")).outerjoin(busy_room_ids, models.Room.id == busy_room_ids.c.room_id).filter(models.Room.hotel_id == hotel_id, models.Room.capacity == guests, or_(busy_room_ids.c.booked_count == None, busy_room_ids.c.booked_count < models.Room.quantity)).all()
     return [
@@ -390,7 +390,7 @@ def get_rooms(hotel_id: int = Path(...), date_from: date = Query(...), date_to: 
 def create_room(room: schemas.RoomCreate, hotel_id: int = Path(...), db: Session = Depends(get_db)):
     hotel = db.query(models.Hotel).filter(models.Hotel.id == hotel_id).first()
     if not hotel:
-        raise HTTPException(400, "Такого отеля нету")
+        raise HTTPException(400, "There is no such hotel")
     new_room = models.Room(
         hotel_id=room.hotel_id,
         name=room.name,
@@ -424,18 +424,18 @@ def create_bookings(bookings: schemas.BookingsCreate, user: models.User = Depend
     with db.begin_nested():
         room = db.query(models.Room).filter(models.Room.id == bookings.room_id).with_for_update().first()
         if not room:
-            raise HTTPException(400, "Такой комнаты не существует")
+            raise HTTPException(400, "This room doesn't exist")
         if bookings.date_from >= bookings.date_to:
-            raise HTTPException(400, "Введите правильную дату")
+            raise HTTPException(400, "Please enter the correct date")
         existing_bookings = db.query(models.Booking).filter(models.Booking.room_id == bookings.room_id, models.Booking.status.in_([models.BookingStatus.pending, models.BookingStatus.confirmed]), models.Booking.date_from < bookings.date_to, models.Booking.date_to > bookings.date_from).count()
         if existing_bookings >= room.quantity:
-            raise HTTPException(400, "Нет свободных мест на выбраные даты")
+            raise HTTPException(400, "There are no available seats for the selected dates.")
         service_ids = bookings.service_ids
         services = db.query(models.Service).filter(models.Service.id.in_(service_ids)).all()
         if len(services) != len(set(service_ids)):
-            raise HTTPException(400, detail="Один или несколько сервисов не найдено")
+            raise HTTPException(400, detail="One or more services were not found.")
         if not bookings.guest_first_name or not bookings.guest_last_name or not bookings.guest_email:
-            raise HTTPException(400, "Введите все данные пользователя")
+            raise HTTPException(400, "Enter all user details")
         total_price_services = sum(service.price for service in services)
         total_price = (bookings.date_to - bookings.date_from).days * room.price_per_night + total_price_services
         new_bookings = models.Booking(
@@ -459,13 +459,13 @@ def create_bookings(bookings: schemas.BookingsCreate, user: models.User = Depend
 def cancel_bookings(id: int = Path(...), user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     booking = db.query(models.Booking).filter(models.Booking.id == id).first()
     if not booking:
-        raise HTTPException(400, "Такой брони не существует")
+        raise HTTPException(400, "Such armor does not exist.")
     if booking.user_id != user.id:
-        raise HTTPException(400, "Бронь не принадлежит вам")
+        raise HTTPException(400, "The reservation does not belong to you")
     if booking.status == models.BookingStatus.completed:
-        raise HTTPException(400, "Бронь уже закончена")
+        raise HTTPException(400, "The reservation is already completed")
     if booking.status == models.BookingStatus.cancelled:
-        raise HTTPException(400, "Бронь уже отменена")
+        raise HTTPException(400, "The reservation has already been cancelled.")
     booking.status = models.BookingStatus.cancelled
     db.commit()
     db.refresh(booking)
@@ -475,15 +475,15 @@ def cancel_bookings(id: int = Path(...), user: models.User = Depends(get_current
 def pay_bookings(pay: schemas.BookingsPay, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     booking = db.query(models.Booking).filter(models.Booking.id == pay.id).first()
     if not booking:
-        raise HTTPException(400, "Такой брони не существует")
+        raise HTTPException(400, "Such armor does not exist.")
     if booking.status == models.BookingStatus.cancelled:
-        raise HTTPException(400, "бронь уже отменена")
+        raise HTTPException(400, "the reservation has already been cancelled")
     if booking.status == models.BookingStatus.confirmed:
-        raise HTTPException(400, "Бронь уже оплачена")
+        raise HTTPException(400, "The reservation has already been paid for.")
     if not booking.user_id == user.id:
-        raise HTTPException(400, "Бронь не принадлежит вам")
+        raise HTTPException(400, "The reservation does not belong to you")
     if len(pay.card_number) < 7 or len(pay.CVC) < 3:
-        raise HTTPException(400, "Введите коректные данные карты")
+        raise HTTPException(400, "Please enter correct card details")
     booking.status = models.BookingStatus.confirmed
     db.commit()
     db.refresh(booking)
@@ -493,11 +493,11 @@ def pay_bookings(pay: schemas.BookingsPay, user: models.User = Depends(get_curre
 def completed_bookings(id: int = Path(...), user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     booking = db.query(models.Booking).filter(models.Booking.id == id).first()
     if booking.user_id != user.id:
-        raise HTTPException(400, "Брон не принадлежит вам")
+        raise HTTPException(400, "The reservation does not belong to you")
     if booking.status != models.BookingStatus.confirmed:
-        raise HTTPException(400, "Бронь не оплачено")
+        raise HTTPException(400, "The reservation has not been paid")
     if booking.status == models.BookingStatus.cancelled:
-        raise HTTPException(400, "Бронь отменена")
+        raise HTTPException(400, "Reservation canceled")
     booking.status = models.BookingStatus.completed
     db.commit()
     db.refresh(booking)
@@ -512,7 +512,7 @@ def get_favorite(user: models.User = Depends(get_current_user), db: Session = De
 def add_favorite(favorite: schemas.FavoriteHotelCreate, status: str = Query(...), user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     hotel = db.query(models.Hotel).filter(models.Hotel.id == favorite.hotel_id).first()
     if not hotel:
-        raise HTTPException(400, "Такого отеля нету")
+        raise HTTPException(400, "There is no such hotel")
     if status == "add":
         existing = db.query(models.FavoriteHotel).filter(models.FavoriteHotel.user_id == user.id, models.FavoriteHotel.hotel_id == favorite.hotel_id).first()
         if existing:
@@ -528,7 +528,7 @@ def add_favorite(favorite: schemas.FavoriteHotelCreate, status: str = Query(...)
     elif status == "remove":
         favorite_obj = db.query(models.FavoriteHotel).filter(models.FavoriteHotel.user_id == user.id, models.FavoriteHotel.hotel_id == favorite.hotel_id).first()
         if not favorite_obj:
-            raise HTTPException(400, "У вас нету такого отеля в избраном")
+            raise HTTPException(400, "You don't have this hotel in your favorites.")
         db.delete(favorite_obj)
         db.commit()
         return {"status": "removed"}
@@ -537,7 +537,7 @@ def add_favorite(favorite: schemas.FavoriteHotelCreate, status: str = Query(...)
 def get_reviews(hotel_id: int = Path(...), db: Session = Depends(get_db)):
     hotel = db.query(models.Hotel).filter(models.Hotel.id == hotel_id).first()
     if not hotel:
-        raise HTTPException(400, "Такого отеля не существует")
+        raise HTTPException(400, "Such a hotel does not exist.")
     reviews = db.query(models.Review).filter(models.Review.hotel_id == hotel_id).options(selectinload(models.Review.user)).limit(20).all()
     return reviews
 
@@ -545,20 +545,20 @@ def get_reviews(hotel_id: int = Path(...), db: Session = Depends(get_db)):
 def create_review(review: schemas.ReviewCreate, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     hotel = db.query(models.Hotel).filter(models.Hotel.id == review.hotel_id).first()
     if not hotel:
-        raise HTTPException(400, "Такого отеля не существует")
+        raise HTTPException(400, "Such a hotel does not exist.")
     if review.booking_id:
         existing_review = db.query(models.Review).filter(models.Review.booking_id == review.booking_id).first()
         if existing_review:
-            raise HTTPException(400, "Отзыв по этой брони уже существует")
+            raise HTTPException(400, "A review for this reservation already exists.")
         booking = db.query(models.Booking).filter(models.Booking.id == review.booking_id, models.Booking.status == models.BookingStatus.completed, models.Booking.user_id == user.id, models.Booking.hotel_id == review.hotel_id).first()
         if not booking:
-            raise HTTPException(400, "Данные бронирования не коректны")
+            raise HTTPException(400, "The booking details are incorrect")
     else:
         completed_bookings = db.query(models.Booking.id).filter(models.Booking.user_id == user.id, models.Booking.status == models.BookingStatus.completed, models.Booking.hotel_id == review.hotel_id)
         used_booking_ids = db.query(models.Review.booking_id).filter(models.Review.user_id == user.id,models.Review.hotel_id == review.hotel_id)
         free_booking = completed_bookings.filter(~models.Booking.id.in_(used_booking_ids)).first()
         if not free_booking:
-            raise HTTPException(400, "Нет завершенных бронирований для отзыва")
+            raise HTTPException(400, "There are no completed bookings to review.")
         review.booking_id = free_booking.id
     new_review = models.Review(
         user_id=user.id,
