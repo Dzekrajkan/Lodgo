@@ -87,6 +87,39 @@ def seed_data():
         hotel_1 = hotels[0]
         hotel_2 = hotels[1]
 
+    image = db.query(models.HotelImage).all()
+
+    if not image:
+        hotelImage_1_1 = models.HotelImage(
+            hotel_id=hotel_1.id,
+            image_url = f"/media/hotels/{hotel_1.id}/hotel.jpg",
+            is_main = True
+        )
+        hotelImage_1_2 = models.HotelImage(
+            hotel_id=hotel_1.id,
+            image_url = f"/media/hotels/{hotel_1.id}/room.jpg",
+            is_main = True
+        )
+        hotelImage_1_3 = models.HotelImage(
+            hotel_id=hotel_1.id,
+            image_url = f"/media/hotels/{hotel_1.id}/yard.jpg",
+            is_main = True
+        )
+        hotelImage_2_1 = models.HotelImage(
+            hotel_id=hotel_2.id,
+            image_url = f"/media/hotels/{hotel_2.id}/hotel.jpg",
+            is_main = True
+        )
+        hotelImage_2_2 = models.HotelImage(
+            hotel_id=hotel_2.id,
+            image_url = f"/media/hotels/{hotel_2.id}/room.jpg",
+            is_main = True
+        )
+
+        db.add_all([hotelImage_1_1, hotelImage_1_2, hotelImage_1_3, hotelImage_2_1, hotelImage_2_2])
+        db.commit()
+        print("Hotel image created")
+
     if not db.query(models.Room).first():
         rooms = [
             models.Room(

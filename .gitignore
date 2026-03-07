@@ -1,8 +1,6 @@
 .venv
 __pycache__
 
-media
-
 backend/.env
 
 # Logs

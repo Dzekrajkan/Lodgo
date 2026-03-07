@@ -56,7 +56,7 @@ function Profile() {
     useEffect(() => {
         if (!lastBooking?.hotel?.images?.length) return
         const main = lastBooking.hotel.images.find(img => img.is_main)?.image_url || lastBooking.hotel.images[0].image_url || fallback
-        setLastBookingImage("http://127.0.0.1:8002" + main)
+        setLastBookingImage("http://localhost:80/api" + main)
     }, [lastBooking])
 
     useEffect(() => {
@@ -157,7 +157,7 @@ function Profile() {
 
                                     return (
                                         <div className="flex items-center p-4 bg-white/5 rounded-xl mt-4" key={booking.id}>
-                                            <img src={"http://127.0.0.1:8002" + mainImage} alt="" className="w-24 h-16 rounded-md object-cover"/>
+                                            <img src={"http://localhost:80/api" + mainImage} alt="" className="w-24 h-16 rounded-md object-cover"/>
                                             <div className="flex-1 ml-4">
                                                 <div className="font-semibold">{booking?.hotel.name}</div>
                                                 <p className="text-sm text-white/70">{formatBookingDates(booking.date_from, booking.date_to)} • {booking.room.capacity} guest</p>
@@ -185,7 +185,7 @@ function Profile() {
 
                                     return (
                                         <div className="flex p-4 bg-white/5 rounded-xl mt-4" key={favorite.id}>
-                                            <img src={"http://127.0.0.1:8002" + mainImage} alt="" className="w-24 h-16 rounded-md object-cover"/>
+                                            <img src={"http://localhost:80/api" + mainImage} alt="" className="w-24 h-16 rounded-md object-cover"/>
                                             <div className="flex-1 ml-4">
                                                 <div className="font-semibold hover:underline" onClick={() => navigate(`/hotels/${favorite.hotel_id}`)}>{favorite.hotel.name}</div>
                                                 <p className="text-sm text-white/70">from: ${favorite.hotel.price_per_night}</p>

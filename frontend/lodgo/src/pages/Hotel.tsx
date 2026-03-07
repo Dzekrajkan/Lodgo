@@ -80,7 +80,7 @@ function Hotel() {
         if (!hotel?.images?.length) return
 
         const main = (hotel.images.find(img => img.is_main)?.image_url || hotel.images[0]?.image_url)
-        setMainImage("http://127.0.0.1:8002" + main)
+        setMainImage("http://localhost:80/api" + main)
     }, [hotel])
 
     if (!hotel) {
@@ -212,7 +212,7 @@ function Hotel() {
                         </div>
                         <div className="p-4 flex gap-3 overflow-x-auto">
                             {hotel.images.map(image => (
-                                <img src={"http://127.0.0.1:8002" + image.image_url} onClick={() => setImage("http://127.0.0.1:8002" + image.image_url)}  key={image.id} className="cursor-pointer ring-1 ring-white/6 w-26 h-20 object-cover rounded-lg"/>
+                                <img src={"http://localhost:80/api" + image.image_url} onClick={() => setImage("http://localhost:80/api" + image.image_url)}  key={image.id} className="cursor-pointer ring-1 ring-white/6 w-26 h-20 object-cover rounded-lg"/>
                             ))}
                         </div>
                     </div>

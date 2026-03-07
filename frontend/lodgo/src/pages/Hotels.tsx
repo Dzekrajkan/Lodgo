@@ -206,7 +206,7 @@ function Hotels() {
                     <div className="bg-white/4 p-4 flex rounded-lg mb-4" key={hotel.id}>
                       <div className="flex flex-3">
                         <div className="mr-4 shrink-0">
-                          <img className="w-50 h-50 rounded-lg" src={hotel.images?.length ? "http://127.0.0.1:8002" + hotel.images.find(img => img.is_main)?.image_url || "http://127.0.0.1:8002" + hotel.images[0].image_url : "https://cf.bstatic.com/xdata/images/hotel/square600/584421551.webp?k=14f2c7c8e5bc8a3e31f34d4b8c248f88a625cea9999abe481fce0c0d5ced559b&o=" }  alt=""/>
+                          <img className="w-50 h-50 rounded-lg" src={hotel.images?.length ? "http://localhost:80/api" + hotel.images.find(img => img.is_main)?.image_url || "http://localhost:80/api" + hotel.images[0].image_url : "https://cf.bstatic.com/xdata/images/hotel/square600/584421551.webp?k=14f2c7c8e5bc8a3e31f34d4b8c248f88a625cea9999abe481fce0c0d5ced559b&o=" }  alt=""/>
                         </div>
                         <div>
                           <a onClick={() => navigate(`/hotels/${hotel.id}`)} translate="no" className="font-bold cursor-pointer hover:underline">{hotel.name}</a>

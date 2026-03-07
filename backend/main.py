@@ -20,7 +20,10 @@ import os
 SECRET_KEY = SECRET_KEY
 MAX_SIZE = 10 * 1024 * 1024
 redis_client: redis.Redis | None = None
-app = FastAPI()
+app = FastAPI(
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json"
+)
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -32,7 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/media", StaticFiles(directory="backend/media"), name="media")
+app.mount("/api/media", StaticFiles(directory="backend/media"), name="media")
 
 @app.on_event("startup")
 async def startup_event():
