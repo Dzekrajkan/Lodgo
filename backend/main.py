@@ -1,45 +1,30 @@
 from fastapi import FastAPI, HTTPException, Depends, Response, Request, UploadFile, File, Path, Query
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from backend import schemas, models
-from backend.database import get_db, engine
+from backend.database import get_db
 from backend.auth import email_utils, auth
-from backend.config import SECRET_KEY, REDIS_HOST, REDIS_PORT
+from backend.config import REDIS_HOST, REDIS_PORT
 from backend.celery_app import celery
 from sqlalchemy import func, or_, desc
 from sqlalchemy.orm import Session, selectinload
+from contextlib import asynccontextmanager
 import redis.asyncio as redis
-from datetime import datetime, timezone, date
+from datetime import date
 from jose import jwt
 import asyncio
 import shutil
 import uvicorn
 import os
 
-SECRET_KEY = SECRET_KEY
 MAX_SIZE = 10 * 1024 * 1024
 redis_client: redis.Redis | None = None
-app = FastAPI(
-    docs_url="/api/docs",
-    openapi_url="/api/openapi.json"
-)
 
-models.Base.metadata.create_all(bind=engine)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.mount("/api/media", StaticFiles(directory="backend/media"), name="media")
-
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global redis_client
+    
     try:
         redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
         pong = await redis_client.ping()
@@ -52,9 +37,8 @@ async def startup_event():
         redis_client = None
         print(f"❌Error: {e}")
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    global redis_client
+    yield
+
     if redis_client:
         try:
             await redis_client.close()
@@ -62,6 +46,22 @@ async def shutdown_event():
             print("🔘 Redis connection closed")
         except asyncio.CancelledError:
             print("⚠️ Shutdown прерван CancelledError")
+            
+app = FastAPI(
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+    lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.mount("/api/media", StaticFiles(directory="backend/media"), name="media")
 
 def get_current_user(request: Request, db: Session = Depends(get_db)):
     access_token = request.cookies.get("access_token")

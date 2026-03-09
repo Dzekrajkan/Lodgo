@@ -12,7 +12,15 @@ for parent in current_file.parents:
         break
 
 if ENV_PATH is None:
-    raise RuntimeError(".env file not found in parent directories")
+    for parent in current_file.parents:
+        candidate = parent / "example.env"
+        if candidate.exists():
+            ENV_PATH = candidate
+            print(".env not found, using example.env")
+            break
+
+if ENV_PATH is None:
+    raise RuntimeError("Neither .env nor example.env file found")
 
 load_dotenv(dotenv_path=ENV_PATH)
 

@@ -68,17 +68,15 @@ export const fetchMe = createAsyncThunk<User, void, { rejectValue: string }>("au
   }
 );
 
-export const fetchRegister = createAsyncThunk< User, RegisterState, { rejectValue: string }>("auth/register", async ({ username, email, password1, password2 }, { rejectWithValue }) => {
+export const fetchRegister = createAsyncThunk< void, RegisterState, { rejectValue: string }>("auth/register", async ({ username, email, password1, password2 }, { rejectWithValue }) => {
     try {
 
-      await axios.post(`${apiUrl}/register`, { username, email, password1, password2 }, {
+      const res = await axios.post(`${apiUrl}/register`, { username, email, password1, password2 }, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
-
-      const me = await api.get("/me");
       
-      return me.data;
+      return res.data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
         return rejectWithValue(
@@ -195,11 +193,9 @@ export const authSlice = createSlice({
                 state.isAuthenticated = true;
                 state.checked = true;
             })
-            .addCase(fetchRegister.fulfilled, (state, action) => {
+            .addCase(fetchRegister.fulfilled, (state) => {
                 state.loading = false;
-                state.user = action.payload;
-                state.isAuthenticated = true;
-                state.success = "Registration was successful!";
+                state.success = "Registration successful, confirmation email sent to email";
             })
             .addCase(fetchLogin.fulfilled, (state, action) => {
                 state.loading = false;

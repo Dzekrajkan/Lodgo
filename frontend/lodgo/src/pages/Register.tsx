@@ -10,7 +10,6 @@ function Register () {
   const dispatch = useDispatch<AppDispatch>();
   const { notify } = useNotify();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-  const success = useSelector((state: RootState) => state.auth.success);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password1, setPassword1] = useState("");
@@ -38,7 +37,7 @@ function Register () {
 
     try {
         await dispatch(fetchRegister({ username, email, password1, password2 })).unwrap();
-        if (success) return notify(success, "success")
+        return notify("Registration successful, confirmation email sent to email", "success")
     } catch (err: any) {
         notify(err || "Registration failed", "error")
       }

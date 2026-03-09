@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr, validator, Field
-from typing import Optional, Literal, List
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
+from typing import Optional, List
 from datetime import datetime, date
 
 class UserCreate(BaseModel):
@@ -9,9 +9,9 @@ class UserCreate(BaseModel):
     password2: str
     is_verified: Optional[bool] = False
 
-    @validator('password2')
-    def passwords_match(cls, v, values):
-        if 'password1' in values and v != values['password1']:
+    @field_validator('password2')
+    def passwords_match(cls, v, info):
+        if info.data.get('password1') != v:
             raise ValueError("The passwords don't match")
         return v
 
@@ -19,8 +19,7 @@ class UserOut(BaseModel):
     id: int
     username: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
     
 class FacilitiesCreate(BaseModel):
     name: str
@@ -29,8 +28,7 @@ class FacilityOut(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ServiceCreate(BaseModel):
     hotel_id: int
@@ -43,8 +41,7 @@ class ServiceOut(BaseModel):
     name: str
     price: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RoomCreate(BaseModel):
     hotel_id: int
@@ -67,8 +64,7 @@ class HotelImageOut(BaseModel):
     image_url: str
     is_main: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class HotelCreate(BaseModel):
     name: str
@@ -104,8 +100,7 @@ class HotelOut(BaseModel):
     images: list[HotelImageOut] = []
     services: list[ServiceOut] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class BookingsCreate(BaseModel):
     room_id: int
@@ -154,5 +149,4 @@ class ReviewOut(BaseModel):
     created_at: datetime
     user: UserOut
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
