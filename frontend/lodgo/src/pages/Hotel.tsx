@@ -47,7 +47,8 @@ function Hotel() {
     const [filterRoom, setFilterRoom] = useState(false)
     const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null)
     const [visibleCount, setVisibleCount] = useState(1)
-    const fallback = "https://cf.bstatic.com/xdata/images/hotel/square600/584421551.webp?k=14f2c7c8e5bc8a3e31f34d4b8c248f88a625cea9999abe481fce0c0d5ced559b&o="
+    const imageHostUrl = import.meta.env.VITE_IMAGE_HOST_URL
+    const fallback = "https://img.freepik.com/free-photo/luxury-villa-with-infinity-pool-sunset-coastal-view_23-2151986080.jpg?semt=ais_hybrid&w=740&q=80"
     const scrollToReviewForm = () => {
         const form = document.getElementById("review-form")
         if (form) {
@@ -80,7 +81,7 @@ function Hotel() {
         if (!hotel?.images?.length) return
 
         const main = (hotel.images.find(img => img.is_main)?.image_url || hotel.images[0]?.image_url)
-        setMainImage("http://localhost:80/api" + main)
+        setMainImage(`http://${imageHostUrl}/api` + main)
     }, [hotel])
 
     if (!hotel) {
@@ -212,7 +213,7 @@ function Hotel() {
                         </div>
                         <div className="p-4 flex gap-3 overflow-x-auto">
                             {hotel.images.map(image => (
-                                <img src={"http://localhost:80/api" + image.image_url} onClick={() => setImage("http://localhost:80/api" + image.image_url)}  key={image.id} className="cursor-pointer ring-1 ring-white/6 w-26 h-20 object-cover rounded-lg"/>
+                                <img src={`http://${imageHostUrl}/api` + image.image_url} onClick={() => setImage(`http://${imageHostUrl}/api` + image.image_url)}  key={image.id} className="cursor-pointer ring-1 ring-white/6 w-26 h-20 object-cover rounded-lg"/>
                             ))}
                         </div>
                     </div>

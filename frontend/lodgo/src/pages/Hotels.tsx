@@ -27,7 +27,11 @@ function Hotels() {
       guests_u: number | null
     }
     const [activeFilter, setActiveFilter] = useState(false)
+    const [priceFrom, setPriceFrom] = useState<number | null>( null)
+    const [priceTo, setPriceTo] = useState<number | null>(null)
     const hotelsToRender = activeFilter ? hotels : allHotels
+    const imageHostUrl = import.meta.env.VITE_IMAGE_HOST_URL
+    const fallback = "https://img.freepik.com/free-photo/luxury-villa-with-infinity-pool-sunset-coastal-view_23-2151986080.jpg?semt=ais_hybrid&w=740&q=80"
 
     useEffect(() => {
       const fetch = async () => {
@@ -97,6 +101,11 @@ function Hotels() {
       
       let filtered = [...allHotels]
 
+      if (priceFrom != null && priceTo != null) {
+        if (priceFrom > priceTo) return notify("The minimum price must be less than the maximum price.", "msg")
+        filtered = filtered.filter(hotel => hotel.price_per_night >= priceFrom && hotel.price_per_night <= priceTo)
+      }
+
       if (stars > 0) {
         filtered = filtered.filter(hotel => hotel.rating >= Number(stars))
       }
@@ -165,11 +174,11 @@ function Hotels() {
                     <div className="flex gap-4 mt-2">
                       <div className="flex flex-col">
                         <label className="text-xs text-white/80">From</label>
-                          <input type="number" className="w-30 mt-2 border border-white/10 rounded-sm no-spin appearance-none"/>
+                          <input type="number" className="w-30 mt-2 p-1 border border-white/10 rounded-sm no-spin appearance-none" placeholder="0" value={priceFrom ?? ""} onChange={(e) => setPriceFrom(e.target.value ? Number(e.target.value) : null)}/>
                       </div>
                       <div className="flex flex-col"> 
                         <label className="text-xs text-white/80">To</label>
-                          <input type="number" className="w-30 mt-2 border border-white/10 rounded-sm no-spin appearance-none"/>
+                          <input type="number" className="w-30 mt-2 p-1 border border-white/10 rounded-sm no-spin appearance-none" placeholder="0" value={priceTo ?? ""} onChange={(e) => setPriceTo(e.target.value ? Number(e.target.value) : null)}/>
                       </div>
                     </div>
                   </div>
@@ -193,7 +202,7 @@ function Hotels() {
                   </div>
                   <div>
                     <button className="w-full bg-blue-500/20 hover:bg-blue-500/40 py-2 rounded-lg transition mb-3 mt-2" type="submit">Apply</button>
-                    <button className="w-full border border-white/10 py-2 rounded-lg transition" type="button" onClick={() => { setStars(0), setHotels([]), setActiveFilter(false)}}>Reset Filters</button>
+                    <button className="w-full border border-white/10 py-2 rounded-lg transition" type="button" onClick={() => { setStars(0), setHotels([]), setActiveFilter(false), setPriceFrom(null), setPriceTo(null)}}>Reset Filters</button>
                   </div>
                 </div>
               </form>
@@ -206,7 +215,7 @@ function Hotels() {
                     <div className="bg-white/4 p-4 flex rounded-lg mb-4" key={hotel.id}>
                       <div className="flex flex-3">
                         <div className="mr-4 shrink-0">
-                          <img className="w-50 h-50 rounded-lg" src={hotel.images?.length ? "http://localhost:80/api" + hotel.images.find(img => img.is_main)?.image_url || "http://localhost:80/api" + hotel.images[0].image_url : "https://cf.bstatic.com/xdata/images/hotel/square600/584421551.webp?k=14f2c7c8e5bc8a3e31f34d4b8c248f88a625cea9999abe481fce0c0d5ced559b&o=" }  alt=""/>
+                          <img className="w-50 h-50 rounded-lg" src={hotel.images?.length ? `http://${imageHostUrl}/api` + hotel.images.find(img => img.is_main)?.image_url || `http://${imageHostUrl}/api` + hotel.images[0].image_url : fallback}  alt=""/>
                         </div>
                         <div>
                           <a onClick={() => navigate(`/hotels/${hotel.id}`)} translate="no" className="font-bold cursor-pointer hover:underline">{hotel.name}</a>

@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from backend import schemas, models
 from backend.database import get_db
 from backend.auth import email_utils, auth
-from backend.config import REDIS_HOST, REDIS_PORT
+from backend.config import REDIS_HOST, REDIS_PORT, CORS_ORIGINS
 from backend.celery_app import celery
 from sqlalchemy import func, or_, desc
 from sqlalchemy.orm import Session, selectinload
@@ -55,7 +55,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost"],
+    allow_origins=[CORS_ORIGINS],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

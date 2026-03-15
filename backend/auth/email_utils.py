@@ -1,6 +1,5 @@
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from urllib.parse import quote
-import os
 from backend.config import MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM, VEREFI_EMAIL_URL
 
 mail_config = ConnectionConfig(

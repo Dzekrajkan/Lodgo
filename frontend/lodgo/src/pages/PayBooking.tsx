@@ -1,11 +1,12 @@
 import React, { useState } from "react"
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import api from "../ts/axiosInstance"
 import { useNotify } from "../components/Notify"
 import axios from "axios"
 
 function PayBooking() {
     const { notify } = useNotify()
+    const navigate = useNavigate()
     const location = useLocation()
     const { id, total_price, name_hotel, name_room, date_from, date_to, guests } = location.state as {
         id: number,
@@ -20,6 +21,7 @@ function PayBooking() {
     const [cardNumber, setCardNumber] = useState("")
     const [cardExpirationDate, setCardExpirationDate] = useState("")
     const [CVC, setCVC] = useState("")
+    const [showModal, setShowModal] = useState(false)
 
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString("en-GB", {
@@ -41,6 +43,7 @@ function PayBooking() {
                 headers: { "Content-Type": "application/json" },
                 withCredentials: true,
             });
+            setShowModal(true)
             return res.data
         } catch(err: unknown) {
         if (axios.isAxiosError(err)) {
@@ -182,6 +185,39 @@ function PayBooking() {
                         </div>
                     </div>
                 </aside>
+                {showModal && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
+                        <div className="bg-[#111316] rounded-2xl shadow-2xl p-8 w-[420px] text-center border border-white/10 animate-[fadeIn_.3s_ease]">
+                        <div className="flex justify-center mb-5">
+                            <div className="w-16 h-16 flex items-center justify-center rounded-full bg-green-500/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            </div>
+                        </div>
+                        <h2 className="text-2xl font-bold mb-2 text-white">Payment Successful</h2>
+                        <p className="text-white/70 text-sm mb-6">Your booking at <span className="text-white font-medium">{name_hotel}</span> has been confirmed.A receipt has been sent to your email.</p>
+                        <div className="bg-white/5 rounded-xl p-4 mb-6 text-sm text-white/80">
+                            <div className="flex justify-between mb-1">
+                                <span>Room</span>
+                                <span>{name_room}</span>
+                            </div>
+                            <div className="flex justify-between mb-1">
+                                <span>Dates</span>
+                                <span>{formatDate(date_from)} - {formatDate(date_to)}</span>
+                            </div>
+                            <div className="flex justify-between font-semibold text-indigo-300">
+                                <span>Total Paid</span>
+                                <span>$ {total_price}</span>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 justify-center">
+                            <button onClick={() => setShowModal(false)} className="px-5 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">Close</button>
+                            <button onClick={() => navigate("/profile")} className="px-5 py-2 bg-blue-500/20 hover:bg-blue-500/40 rounded-md transition font-medium">My Bookings</button>
+                        </div>
+                        </div>
+                    </div>
+                )}
             </div>
           </div>
         </>

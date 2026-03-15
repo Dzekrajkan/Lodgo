@@ -23,7 +23,8 @@ function Profile() {
   const [activebooking, setActiveBooking] = useState(0)
   const [finishedbooking, setFinichedBooking] = useState(0)
   const [cancelledbooking, setCancelledBooking] = useState(0)
-  const fallback = "https://cf.bstatic.com/xdata/images/hotel/square600/584421551.webp?k=14f2c7c8e5bc8a3e31f34d4b8c248f88a625cea9999abe481fce0c0d5ced559b&o="
+  const imageHostUrl = import.meta.env.VITE_IMAGE_HOST_URL
+  const fallback = "https://img.freepik.com/free-photo/luxury-villa-with-infinity-pool-sunset-coastal-view_23-2151986080.jpg?semt=ais_hybrid&w=740&q=80"
   const [lastBookingImage, setLastBookingImage] = useState(fallback);
 
     useEffect(() => {
@@ -56,7 +57,7 @@ function Profile() {
     useEffect(() => {
         if (!lastBooking?.hotel?.images?.length) return
         const main = lastBooking.hotel.images.find(img => img.is_main)?.image_url || lastBooking.hotel.images[0].image_url || fallback
-        setLastBookingImage("http://localhost:80/api" + main)
+        setLastBookingImage(`http://${imageHostUrl}/api` + main)
     }, [lastBooking])
 
     useEffect(() => {
@@ -157,7 +158,7 @@ function Profile() {
 
                                     return (
                                         <div className="flex items-center p-4 bg-white/5 rounded-xl mt-4" key={booking.id}>
-                                            <img src={"http://localhost:80/api" + mainImage} alt="" className="w-24 h-16 rounded-md object-cover"/>
+                                            <img src={`http://${imageHostUrl}/api` + mainImage} alt="" className="w-24 h-16 rounded-md object-cover"/>
                                             <div className="flex-1 ml-4">
                                                 <div className="font-semibold">{booking?.hotel.name}</div>
                                                 <p className="text-sm text-white/70">{formatBookingDates(booking.date_from, booking.date_to)} • {booking.room.capacity} guest</p>
@@ -185,7 +186,7 @@ function Profile() {
 
                                     return (
                                         <div className="flex p-4 bg-white/5 rounded-xl mt-4" key={favorite.id}>
-                                            <img src={"http://localhost:80/api" + mainImage} alt="" className="w-24 h-16 rounded-md object-cover"/>
+                                            <img src={`http://${imageHostUrl}/api` + mainImage} alt="" className="w-24 h-16 rounded-md object-cover"/>
                                             <div className="flex-1 ml-4">
                                                 <div className="font-semibold hover:underline" onClick={() => navigate(`/hotels/${favorite.hotel_id}`)}>{favorite.hotel.name}</div>
                                                 <p className="text-sm text-white/70">from: ${favorite.hotel.price_per_night}</p>

@@ -31,8 +31,8 @@ function MainLayout() {
           </>
            : 
            <>
-            <button onClick={() => navigate("login")} className="py-2 px-4 text-sm">Login</button>
-            <button onClick={() => navigate("register")} className="bg-gradient-to-r bg-blue-500/20 hover:bg-blue-500/40 p-2 px-4 rounded-md font-semibold text-white hover:scale-105 transition">Register</button>
+            <button onClick={() => navigate("login")} className="py-2 px-4 text-sm">Sign in</button>
+            <button onClick={() => navigate("register")} className="bg-gradient-to-r bg-blue-500/20 hover:bg-blue-500/40 p-2 px-4 rounded-md font-semibold text-white hover:scale-105 transition">Sign up</button>
            </> 
           }
         </div>

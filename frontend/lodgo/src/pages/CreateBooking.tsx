@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import api from "../ts/axiosInstance"
 import type { Hotel, Room, Services } from "../utils/types"
 import { useNotify } from "../components/Notify"
+import axios from "axios"
 
 function CreateBooking() {
     const navigate = useNavigate()
@@ -75,8 +76,12 @@ function CreateBooking() {
                     guests: room.capacity
                 }
             })
-        } catch(err: any) {
-            return notify(err, "error")
+        } catch(err: unknown) {
+            if (axios.isAxiosError(err)) {
+                return notify(err.response?.data?.detail, "error")
+            } else {
+                return notify("Unknown error", "error")
+            }
         }
     }
 
