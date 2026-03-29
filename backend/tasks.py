@@ -27,7 +27,7 @@ def hotel_rating():
 @celery.task
 def bookings_cancel():
     db = SessionLocal()
-    ten_minutes_ago = datetime.now(tz) - timedelta(minutes=1)
+    ten_minutes_ago = datetime.now(tz) - timedelta(minutes=10)
     bookings = db.query(models.Booking).filter(models.Booking.status == models.BookingStatus.pending, models.Booking.created_at <= ten_minutes_ago).all()
     for booking in bookings:
         booking.status = models.BookingStatus.cancelled
