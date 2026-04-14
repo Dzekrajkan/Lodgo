@@ -143,7 +143,7 @@ async def search_hotels(city: str = Query(...), date_from: date = Query(...), da
      ```
      (the last 2 fields very rarely need changes)
 
-     If you do not know where to get this data, refer to this [documentation](https://snov.io/knowledgebase/how-to-create-and-use-gmail-app-password/).
+     If you do not know where to get this data, refer to this [documentation](https://www.hostpapa.com/knowledgebase/how-to-create-and-use-google-app-passwords/).
   3. When the container is created, the database is populated with basic data so that you can go through all the site’s features. These include hotel data, rooms, reviews, and accounts. You can see more in the [seed.py](./backend/seed.py) file
 
      **It is very important: to go through all the site’s features, you need to log in, and for this a test account has been created. Below are its email and password:**
