@@ -1,10 +1,9 @@
 #!/bin/sh
-
-sleep 5
+set -e
 
 if [ "$RUN_MIGRATIONS" = "true" ]; then
   echo "Applying Alembic migrations..."
-  alembic upgrade head
+  alembic -c backend/alembic.ini upgrade head
 
   echo "Seeding database..."
   python -m backend.seed

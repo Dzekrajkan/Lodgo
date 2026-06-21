@@ -73,27 +73,13 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: nginx/Dockerfile.prod
+      dockerfile: nginx/Dockerfile
     depends_on:
       - backend
     ports:
       - "80:80"
-      - "443:443"
-    volumes:
-      - certbot_certs:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
     restart: unless-stopped
-
-  certbot:
-    image: certbot/certbot
-    volumes:
-      - certbot_certs:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    entrypoint: >
-      sh -c "trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;"
 
 volumes:
   postgres_data:
   media_data:
-  certbot_certs:
-  certbot_www:

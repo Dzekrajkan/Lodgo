@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from backend import schemas, models
 from backend.database import get_db
 from backend.auth import email_utils, auth
-from backend.config import REDIS_HOST, REDIS_PORT, CORS_ORIGINS
+from backend.config import REDIS_HOST, REDIS_PORT, CORS_ORIGINS, COOKIE_SECURE
 from backend.celery_app import celery
 from sqlalchemy import func, or_, desc
 from sqlalchemy.orm import Session, selectinload
@@ -97,7 +97,7 @@ def refresh(request: Request, response: Response):
         value=new_access_token,
         httponly=True,
         max_age=auth.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        secure=False,
+        secure=COOKIE_SECURE,
         samesite="lax"
     )
 
@@ -121,7 +121,7 @@ async def login(response: Response, data: OAuth2PasswordRequestForm = Depends(),
         value=access_token,
         httponly=True,
         max_age=auth.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        secure=False,
+        secure=COOKIE_SECURE,
         samesite="lax"
     )
 
@@ -130,7 +130,7 @@ async def login(response: Response, data: OAuth2PasswordRequestForm = Depends(),
         value=refresh_token,
         httponly=True,
         max_age=auth.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
-        secure=False,
+        secure=COOKIE_SECURE,
         samesite="lax"
     )
 
@@ -576,4 +576,4 @@ def create_review(review: schemas.ReviewCreate, user: models.User = Depends(get_
     return new_review
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8002)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
