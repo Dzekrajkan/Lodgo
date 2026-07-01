@@ -1,7 +1,7 @@
 from celery import Celery
 from backend.config import CELERY_BROKER_URL
 
-celery = Celery("fastapi_app", broker=CELERY_BROKER_URL, backend=CELERY_BROKER_URL)
+celery = Celery("fastapi_app", broker=CELERY_BROKER_URL)
 
 celery.autodiscover_tasks(["backend"])
 

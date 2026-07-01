@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 import enum
 from .database import Base
 
-
 class User(Base):
     __tablename__ = "users"
 
@@ -11,10 +10,8 @@ class User(Base):
     username = Column(String, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-
     is_verified = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     hotels = relationship("Hotel", back_populates="owner")
@@ -40,22 +37,16 @@ class Hotel(Base):
 
     id = Column(Integer, primary_key=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=True)
-
     address = Column(String, nullable=False)
     city = Column(String, index=True, nullable=False)
     country = Column(String, index=True, nullable=False)
-
     latitude = Column(String, nullable=True)
     longitude = Column(String, nullable=True)
-
     price_per_night = Column(Integer, nullable=False)
-
     check_in_time = Column(String, default="14:00")
     check_out_time = Column(String, default="12:00")
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("User", back_populates="hotels")
@@ -72,10 +63,8 @@ class Room(Base):
 
     id = Column(Integer, primary_key=True)
     hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
-
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
-
     price_per_night = Column(Integer, nullable=False)
     capacity = Column(Integer, nullable=False)
     quantity = Column(Integer, default=1)
@@ -89,7 +78,6 @@ class BookingStatus(enum.Enum):
     cancelled = "cancelled"
     completed = "completed"
 
-
 class Booking(Base):
     __tablename__ = "bookings"
 
@@ -97,17 +85,13 @@ class Booking(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False)
     hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
-
     guest_first_name = Column(String, nullable=False)
     guest_last_name = Column(String, nullable=False)
     guest_email = Column(String, nullable=False)
-
     date_from = Column(DateTime, nullable=False)
     date_to = Column(DateTime, nullable=False)
-
     total_price = Column(Integer, nullable=False)
     status = Column(Enum(BookingStatus), default=BookingStatus.pending)
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="bookings")
@@ -120,7 +104,6 @@ class HotelImage(Base):
 
     id = Column(Integer, primary_key=True)
     hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
-
     image_url = Column(String, nullable=False)
     is_main = Column(Boolean, default=False)
 
@@ -150,7 +133,6 @@ class FavoriteHotel(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     hotel_id = Column(Integer, ForeignKey("hotels.id", ondelete="CASCADE"))
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="favorite_hotels")
@@ -160,14 +142,11 @@ class Review(Base):
     __tablename__ = "reviews"
 
     id = Column(Integer, primary_key=True)
-
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
     booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
-
     rating = Column(Integer, nullable=False)
     comment = Column(String, nullable=True)
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User")

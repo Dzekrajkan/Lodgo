@@ -46,7 +46,8 @@ REFRESH_TOKEN_EXPIRE_DAYS = get_env("REFRESH_TOKEN_EXPIRE_DAYS", cast=int)
 
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
 
-CORS_ORIGINS = get_env("CORS_ORIGINS")
+CORS_ORIGINS = [origin.strip() for origin in get_env("CORS_ORIGINS").split(",") if origin.strip()]
+
 VEREFI_EMAIL_URL = get_env("VEREFI_EMAIL_URL")
 
 REDIS_HOST = get_env("REDIS_HOST")
