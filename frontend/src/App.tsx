@@ -21,7 +21,7 @@ function App() {
 
   useEffect(() => {
     dispatch(fetchMe())
-  }, [])
+  }, [dispatch])
 
   useEffect(() => {
     if (isAuthenticated) {

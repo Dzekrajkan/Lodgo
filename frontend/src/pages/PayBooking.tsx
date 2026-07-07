@@ -30,7 +30,7 @@ function PayBooking() {
         })
     }
 
-    const handelPayBooking = async (e: React.FormEvent) => {
+    const handlePayBooking = async (e: React.FormEvent) => {
         e.preventDefault();
         
         if (username.length <= 3) return notify("Enter your username", "msg")
@@ -39,9 +39,12 @@ function PayBooking() {
         if (CVC.length !== 3) return notify("The CVC code must consist of 3 characters.", 'msg')
 
         try {
-            const res = await api.post("/bookings/pay", { id: id, username: username, card_number: cardNumber, card_expiration_date: cardExpirationDate, CVC: CVC }, {
-                headers: { "Content-Type": "application/json" },
-                withCredentials: true,
+            const res = await api.post("/bookings/pay", {
+                id: id,
+                username: username,
+                card_number: cardNumber,
+                card_expiration_date: cardExpirationDate,
+                CVC: CVC
             });
             setShowModal(true)
             return res.data
@@ -106,7 +109,7 @@ function PayBooking() {
                             </div>
                         </div>
                     </div>
-                    <form className="bg-white/6 p-6 rounded-xl" onSubmit={handelPayBooking}>
+                    <form className="bg-white/6 p-6 rounded-xl" onSubmit={handlePayBooking}>
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div className="col-span-2">
                             <label htmlFor="" className="text-sm text-white/70">Name on card</label>
@@ -125,7 +128,6 @@ function PayBooking() {
                             <input type="text" inputMode="numeric" maxLength={5} placeholder="MM/YY" className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-600/15" value={cardExpirationDate}   onChange={(e) => {
                                 let value = e.target.value.replace(/\D/g, "").slice(0, 4)
                                 if (value.length >= 3) value = value.slice(0, 2) + "/" + value.slice(2)
-                                console.log(value)
                                 setCardExpirationDate(value)
                             }} required/>
                         </div>

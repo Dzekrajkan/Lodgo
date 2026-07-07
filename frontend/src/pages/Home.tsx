@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useNotify } from "../components/Notify"
+import { Avatar } from "../components/Avatar"
 
 function Home() {
     const navigate = useNavigate()
@@ -10,10 +11,11 @@ function Home() {
     const [date_to, setDate_to] = useState("")
     const [guests, setGuests] = useState(1)
 
-    const handelsearch = async () => {
+    const handleSearch = async () => {
       if (city.length <= 0) return notify("Enter city", "msg");
       if (date_from.length <= 0) return notify("Enter your arrival date", "msg");
       if (date_to.length <= 0) return notify("Enter your departure date", "msg");
+      if (date_from >= date_to) return notify("Check-out date must be after check-in", "msg");
 
       navigate("/hotels", {
         state: {
@@ -28,7 +30,7 @@ function Home() {
   return (
     <>
       <div className="max-w-7xl mx-auto px-6">
-        <section className="reletive grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <section className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-7">
                 <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Find the perfect hotel for your trip</h1>
                 <p className="text-lg text-white/70">Compare prices, see real photos and reviews, book instantly — all in one place.</p>
@@ -43,6 +45,7 @@ function Home() {
                         <select className="py-2 px-2 border border-white/10 rounded-md w-full" value={guests} onChange={(e) => setGuests(Number(e.target.value))}>
                           <option className="text-black" value={1}>1 adult</option>
                           <option className="text-black" value={2}>2 adults</option>
+                          <option className="text-black" value={3}>3 adults</option>
                           <option className="text-black" value={4}>Family — 2 adults, 2 children</option>
                         </select>
                     </div>
@@ -63,7 +66,7 @@ function Home() {
                   </div>
                 </div>
                 <div className="">
-                  <button className="py-3 px-16 mr-4 bg-blue-500/20 hover:bg-blue-500/40 rounded-md hover:scale-105 transition" onClick={handelsearch}>Search</button>
+                  <button className="py-3 px-16 mr-4 bg-blue-500/20 hover:bg-blue-500/40 rounded-md hover:scale-105 transition" onClick={handleSearch}>Search</button>
                   <button className="text-sm text-white/80 underline" onClick={() => navigate("/hotels")}>View All Hotels</button>
                 </div>
             </div>
@@ -84,9 +87,9 @@ function Home() {
                 <div className="bg-white/5 p-6 rounded-xl">
                   <p className="text-sm text-gray-200 mb-4">"The hotel exceeded expectations: clean, polite staff, and great breakfast. Recommended for business trips."</p>
                   <div className="flex gap-3">
-                    <img src="https://api.dicebear.com/9.x/avataaars/svg?seed=Olga" alt="Ольга" className="w-12 h-12 rounded-full object-cover" />
+                    <Avatar username="Olga"/>
                     <div>
-                      <h4 className="font-semibold">Olga, Kyiv</h4>
+                      <h4 className="font-semibold">Olga</h4>
                       <p className="text-xs text-gray-400">Business Trip</p>
                     </div>
                   </div>
@@ -94,9 +97,9 @@ function Home() {
                 <div className="bg-white/5 p-6 rounded-xl">
                   <p className="text-sm text-gray-200 mb-4">"Loved the location and room cleanliness. Convenient for family trips — playground nearby."</p>
                   <div className="flex gap-3">
-                    <img src="https://api.dicebear.com/9.x/avataaars/svg?seed=п" alt="Ігор" className="w-12 h-12 rounded-full object-cover" />
+                    <Avatar username="Igor"/>
                     <div>
-                      <h4 className="font-semibold">Igor, Lviv</h4>
+                      <h4 className="font-semibold">Igor</h4>
                       <p className="text-xs text-gray-400">With Family</p>
                     </div>
                   </div>
@@ -104,9 +107,9 @@ function Home() {
                 <div className="bg-white/5 p-6 rounded-xl">
                   <p className="text-sm text-gray-200 mb-4">"Friendly staff and quick check-in. Modern room with everything needed — will return."</p>
                   <div className="flex gap-3">
-                    <img src="https://api.dicebear.com/9.x/avataaars/svg?seed=Lina" alt="Ліна" className="w-12 h-12 rounded-full object-cover" />
+                    <Avatar username="Lina"/>
                     <div>
-                      <h4 className="font-semibold">Lina, Odesa</h4>
+                      <h4 className="font-semibold">Lina</h4>
                       <p className="text-xs text-gray-400">Weekend</p>
                     </div>
                   </div>

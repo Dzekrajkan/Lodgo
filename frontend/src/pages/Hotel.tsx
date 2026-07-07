@@ -2,28 +2,14 @@ import React, { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate, useParams } from "react-router-dom"
 import type { AppDispatch, RootState } from "../ts/store"
-import Room from "./Room"
-import type { Hotel as HotelType, Room as RoomType } from "../utils/types"
+import RoomModal from "./RoomModal"
+import type { Hotel as HotelType, Room as RoomType, Review } from "../ts/types"
 import { setFavorites } from "../ts/authSlice"
 import api from "../ts/axiosInstance"
 import { useNotify } from "../components/Notify"
 import axios from "axios"
-
-interface User {
-    id: number,
-    username: string
-}
-
-interface Reviews {
-    id: number,
-    user_id: number,
-    hotel_id: number,
-    booking_id: number | null,
-    rating: number,
-    comment: string,
-    create_at: string
-    user: User
-}
+import { Avatar } from "../components/Avatar"
+import { Heart, HeartCrack, MapPin, Share2 } from "lucide-react"
 
 function Hotel() {
     const { hotelId } = useParams()
@@ -34,8 +20,8 @@ function Hotel() {
     const [hotel, setHotel] = useState<HotelType>()
     const [rooms, setRooms] = useState<RoomType[]>([])
     const favorites = useSelector((state: RootState) => state.auth.favorites)
-    const isFavorite = hotel ? favorites?.some(favorite => favorite.hotel_id === hotel.id) : false
-    const [reviews, setReviews] = useState<Reviews[] | null>(null)
+    const isFavorite = hotel ? favorites?.some(f => f.hotel.id === hotel.id) : false
+    const [reviews, setReviews] = useState<Review[] | null>(null)
     const [rating, setRating] = useState(0)
     const [comment, setComment] = useState("")
     const [mainImage, setMainImage] = useState<string | null>(null)
@@ -88,11 +74,12 @@ function Hotel() {
         return <div className="flex items-center justify-center">Loading...</div>
     }
 
-    const handelfilter = async(e: React.FormEvent) => {
+    const handlefilter = async(e: React.FormEvent) => {
       e.preventDefault();
 
-      if (date_from.length <= 0) return notify("Enter your arrival date", "msg");
-      if (date_to.length <= 0) return notify("Enter your departure date", "msg");
+      if (!date_from) return notify("Enter your arrival date", "msg");
+      if (!date_to) return notify("Enter your departure date", "msg");
+      if (date_from >= date_to) return notify("Check-out date must be after check-in", "msg");
 
       try {
         const res = await api.get(`/hotels/${hotel_id}/rooms?&date_from=${date_from}&date_to=${date_to}&guests=${guests}`)
@@ -107,7 +94,7 @@ function Hotel() {
       setFilterRoom(true)
     }
 
-    const handelCreateBooking = async(room: RoomType) => {
+    const handleCreateBooking = async(room: RoomType) => {
         if (!isAuthenticated) return notify("Please sign in to continue.", "msg")
         if (date_from.length <= 0) return notify("Enter your arrival date", "msg");
         if (date_to.length <= 0) return notify("Enter your departure date", "msg");
@@ -123,13 +110,9 @@ function Hotel() {
         })
     }
 
-    const handelAddFavorite = async() => {
+    const handleAddFavorite = async() => {
         try {
-            const res = await api.post(`/favorite?status=add`, {
-                hotel_id: hotel.id,
-                headers: { "Content-Type": "application/json" },
-                withCredentials: true,
-            })
+            const res = await api.post(`/favorite?status=add`, {hotel_id: hotel.id})
             dispatch(setFavorites([...(favorites || []), res.data]))
         } catch(err: unknown) {
             if (axios.isAxiosError(err)) {
@@ -140,14 +123,10 @@ function Hotel() {
         }
     }
 
-    const handelRemoveFavorite = async() => {
+    const handleRemoveFavorite = async() => {
         try {
-            await api.post(`/favorite?status=remove`, {
-                hotel_id: hotel.id,
-                headers: { "Content-Type": "application/json" },
-                withCredentials: true,
-            })
-            dispatch(setFavorites(favorites?.filter(f => f.hotel_id !== hotel.id)))
+            await api.post(`/favorite?status=remove`, {hotel_id: hotel.id})
+            dispatch(setFavorites(favorites?.filter(f => f.hotel.id !== hotel.id)))
         } catch(err: unknown) {
             if (axios.isAxiosError(err)) {
                 return notify(err.response?.data?.detail, "error")
@@ -157,15 +136,17 @@ function Hotel() {
         }
     }
 
-    const handelCreateReview = async(e: React.FormEvent) => {
+    const handleCreateReview = async(e: React.FormEvent) => {
         e.preventDefault()
+        if (rating <= 0) return notify("Rate this review", "msg")
+        if (!comment) return notify("Write a review text", "msg")
         try {
-            if (rating <= 0) return notify("Rate this review", "msg")
-            if (comment.length <= 0) return notify("Write a review text")
-            await api.post("/review", {hotel_id: hotelId, booking_id: null, rating: rating, comment: comment,
-                headers: { "Content-Type": "application/json" },
-                withCredentials: true,
-            })
+            await api.post("/review", {hotel_id: hotelId, booking_id: null, rating, comment})
+            const res = await api.get(`/reviews/${hotelId}`)
+            setReviews(res.data)
+            setRating(0)
+            setComment("")
+            notify("Review submitted!", "success")
         } catch(err: unknown) {
             if (axios.isAxiosError(err)) {
                 return notify(err.response?.data?.detail, "error")
@@ -194,15 +175,15 @@ function Hotel() {
             <div className="flex justify-between items-end">
               <div className="flex flex-col">
                   <h1 className="text-4xl font-bold mb-2">{hotel.name}</h1>
-                  <p className="text-sm text-white/70 mb-4">{hotel.address}</p>
+                  <div className="flex items-center gap-1 mt-1"><MapPin size={24}/> <p className="text-sm text-white/70">{hotel.address}</p></div>
                   <div className="flex items-center gap-1">
                     <div className="py-3 px-1 text-sm">{hotel.rating}★</div>
                     <div className="text-sm text-white/70">• {hotel.reviews_count} отзыва</div>
                   </div>
               </div>
-              <div className="inline-flex items-center gap-3">
-                <button className="px-4 py-2 rounded-md border border-white/10 bg-white/4" onClick={handleShareHotel}>Share</button>
-                {isFavorite ? <button className="px-4 py-2 rounded-md bg-red-500/20 hover:bg-red-500/40 transition" onClick={handelRemoveFavorite}>Remove from Favorites</button> : <button className="px-4 py-2 rounded-md bg-blue-500/20 hover:bg-blue-500/40 transition" onClick={handelAddFavorite}>Add to Favorites</button>}
+              <div className="inline-flex items-center gap-5 mr-4">
+                {isFavorite ? <button onClick={handleRemoveFavorite}><HeartCrack className="hover:text-red-500 transition-ciolor duration-200 cursor-pointer"/></button> : <button onClick={handleAddFavorite}><Heart className="hover:text-red-400 hover:fill-red-400 transition-color duration-300 cursor-pointer"/></button>}
+                <button onClick={handleShareHotel}><Share2 className="cursor-pointer"/></button>
               </div>
             </div>
             <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -265,12 +246,20 @@ function Hotel() {
                                             <h3 className="text-lg font-bold">${room.price_per_night}</h3>
                                         </div>
                                         <div className="col-span-3 p-2 items-center flex justify-center bg-white/8">
-                                            <button className="rounded-md bg-blue-500/20 hover:bg-blue-500/40 py-2 px-10 transition" onClick={() => handelCreateBooking(room)}>Book Now</button>
+                                            <button className="rounded-md bg-blue-500/20 hover:bg-blue-500/40 py-2 px-10 transition" onClick={() => handleCreateBooking(room)}>Book Now</button>
                                         </div>
                                     </div>
                                  )}
                             </ul>
-                            {selectedRoom && (<Room room={selectedRoom} onClose={() => setSelectedRoom(null)} />)}
+                            {selectedRoom && (
+                                <RoomModal
+                                    room={selectedRoom}
+                                    dateFrom={date_from}
+                                    dateTo={date_to}
+                                    onClose={() => setSelectedRoom(null)}
+                                    onBook={(room) => handleCreateBooking(room)}
+                                />
+                            )}
                             <div className="border-t border-white/8 flex border-2"></div>
                         </div>
                     </div>
@@ -289,12 +278,12 @@ function Hotel() {
                                 {reviews?.slice(0, visibleCount).map(review => (
                                     <div className="bg-white/5 p-6 rounded-2xl shadow-lg" key={review.id}>
                                         <div className="flex items-start gap-3">
-                                            <div className="bg-white rounded-full w-10 h-10 items-center justify-center flex text-black">M</div>
+                                            <Avatar username={review.user.username} />
                                             <div className="flex-1">
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <h3 className="font-semibold">{review.user.username}</h3>
-                                                        <p className="text-xs text-white/70">{review.create_at}</p>
+                                                        <p className="text-xs text-white/70">{review.created_at}</p>
                                                     </div>
                                                     <div>
                                                         <div className="font-semibold">{review.rating}</div>
@@ -313,7 +302,7 @@ function Hotel() {
                             </div>
                             <div className="border-t pt-6">
                                 <h3 className="mb-4">Leave a Review</h3>
-                                <form onSubmit={(e) => handelCreateReview(e)} id="review-form">
+                                <form onSubmit={(e) => handleCreateReview(e)} id="review-form">
                                     <div className="flex items-center mb-4 ml-4">
                                         <p className="text-sm text-white/80 mr-3">Rating</p>
                                         <div className="flex gap-1">
@@ -340,7 +329,7 @@ function Hotel() {
                             <div className="text-2xl font-bold">from ${hotel.price_per_night}</div>
                             <div className="text-sm text-white/70">/ night</div>
                         </div>
-                        <form onSubmit={handelfilter}>
+                        <form onSubmit={handlefilter}>
                             <div>
                                 <label htmlFor="" className="text-sm text-gray-300">Check-in Date</label>
                                 <input type="date" className="py-2 px-2 border border-white/10 rounded-md w-full bg-transparent mt-1" value={date_from} onChange={(e) => setDate_from(e.target.value)}/>
@@ -355,6 +344,7 @@ function Hotel() {
                                     <select className="py-2 px-2 border border-white/10 rounded-md w-full" value={guests} onChange={(e) => setGuests(Number(e.target.value))}>
                                         <option className="text-black" value={1}>1 adult</option>
                                         <option className="text-black" value={2}>2 adults</option>
+                                        <option className="text-black" value={3}>3 adults</option>
                                         <option className="text-black" value={4}>Family — 2 adults, 2 children</option>
                                     </select>
                                 </div>

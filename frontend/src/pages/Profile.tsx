@@ -5,9 +5,11 @@ import type { AppDispatch,  RootState } from "../ts/store";
 import { fetchFavoriteHotel } from "../ts/authSlice";
 import { formatBookingDates } from "../utils/formatBookingDates";
 import api from "../ts/axiosInstance";
-import type { Bookings } from "../utils/types";
+import type { Booking } from "../ts/types";
 import axios from "axios";
 import { useNotify } from "../components/Notify";
+import { Avatar } from "../components/Avatar";
+import { CalendarDays } from "lucide-react";
 
 function Profile() {
   const navigate = useNavigate();
@@ -17,8 +19,8 @@ function Profile() {
   const user = useSelector((state: RootState) => state.auth.user);
   const [page, setPage] = useState<"1" | "2" | "3">("1");
   const [render, setRender] = useState(false)
-  const [bookings, setBookings] = useState<Bookings[]>([])
-  const [lastBooking, setLastBooking] = useState<Bookings>()
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [lastBooking, setLastBooking] = useState<Booking>()
   const favorites = useSelector((state: RootState) => state.auth.favorites)
   const [activebooking, setActiveBooking] = useState(0)
   const [finishedbooking, setFinichedBooking] = useState(0)
@@ -33,15 +35,10 @@ function Profile() {
         } else {
             const fetchBookings = async () => {
                 try {
-                    const res_last = await api.get(`/bookings?status=last`, {
-                        headers: { "Content-Type": "application/json" },
-                        withCredentials: true,
-                    })
-                    setLastBooking(res_last.data)
-                    const res_all = await api.get(`/bookings?status=all`, {
-                        headers: { "Content-Type": "application/json" },
-                        withCredentials: true,
-                    })
+                    const res_last = await api.get(`/bookings?status=last`)
+                    const lastData = res_last.data
+                    setLastBooking(Array.isArray(lastData) && lastData.length === 0 ? undefined : lastData)
+                    const res_all = await api.get(`/bookings?status=all`)
                     setBookings(res_all.data)
                 } catch(err: unknown) {
                     if (axios.isAxiosError(err)) {
@@ -82,10 +79,10 @@ function Profile() {
         }
     }, [page])
 
-    const handelCancelBooking = async (id: number) => {
+    const handleCancelBooking = async (id: number) => {
         try {
             const res = await api.post(`/bookings/${id}/cancel`)
-            setBookings(prev => prev?.map( s =>s.id === id ? { ...s, status: "cancelled" } : s ))
+            setBookings(prev => prev?.map(s => s.id === id ? { ...s, status: "cancelled" } : s))
             return res.data
         } catch(err: unknown) {
             if (axios.isAxiosError(err)) {
@@ -103,21 +100,20 @@ function Profile() {
                 <aside className="lg:col-span-1">
                     <div className="bg-white/4 p-6 rounded-2xl shadow-lg">
                         <div className="flex gap-4 items-center mb-6">
-                            <div className="bg-white rounded-full w-14 h-14"></div>
+                            <Avatar username={user?.username || "?"} size={12}/>
                             <div>
                                 <div className="font-semibold">{user?.username}</div>
                                 <div className="text-sm text-white/70">{user?.email}</div>
                             </div>
                         </div>
                         <nav className="space-y-1 text-sm">
-                            <button className="py-2 w-full px-3 text-left rounded-md bg-white/8" onClick={() => setPage("1")}>Overview</button>
-                            <button className="py-2 w-full px-3 text-left rounded-md" onClick={() => setPage("2")}>My Bookings</button>
-                            <button className="py-2 w-full px-3 text-left rounded-md" onClick={() => setPage("3")}>Favorite Hotels</button>
+                            <button className={`py-2 w-full px-3 text-left rounded-md ${page === "1" ? "bg-white/8" : "hover:bg-white/4"}`} onClick={() => setPage("1")}>Overview</button>
+                            <button className={`py-2 w-full px-3 text-left rounded-md ${page === "2" ? "bg-white/8" : "hover:bg-white/4"}`} onClick={() => setPage("2")}>My Bookings</button>
+                            <button className={`py-2 w-full px-3 text-left rounded-md ${page === "3" ? "bg-white/8" : "hover:bg-white/4"}`} onClick={() => setPage("3")}>Favorite Hotels</button>
                         </nav>
                     </div>
                 </aside>
                 <section className="lg:col-span-3">
-                    
                     { page == "1" && 
                         <div>
                             <div className="grid grid-cols-3 gap-4 mb-6 mt-5">
@@ -140,8 +136,8 @@ function Profile() {
                                     <div className="flex items-center p-4 bg-white/5 rounded-xl mt-4">
                                         <img src={lastBookingImage} className="w-24 h-16 rounded-md object-cover"/>
                                         <div className="flex-1 ml-4">
-                                            <div className="font-semibold">{lastBooking?.hotel.name}</div>
-                                            <p className="text-sm text-white/70">{formatBookingDates(lastBooking?.date_from, lastBooking?.date_to)} • {lastBooking?.room.capacity} guest</p>
+                                            <div className="font-semibold">{lastBooking?.hotel?.name}</div>
+                                            <p className="text-sm text-white/70 flex items-center"><CalendarDays size={16} className="mr-1" />{formatBookingDates(lastBooking?.date_from, lastBooking?.date_to)} • {lastBooking?.room.capacity} guest</p>
                                         </div>
                                         <button className="rounded-md bg-blue-500/20 hover:bg-blue-500/40 py-2 px-4 transition" onClick={() => navigate(`/hotels/${lastBooking?.hotel.id}`)}>View</button>
                                     </div>
@@ -154,20 +150,21 @@ function Profile() {
                             <div className="bg-white/4 p-6 rounded-2xl mt-5">
                                 <h3 className="mb-3 font-semibold text-lg">All Bookings</h3>
                                 {bookings?.map(booking => {
-                                const mainImage = booking.hotel?.images?.find(img => img.is_main)?.image_url  || booking.hotel?.images?.[0]?.image_url  || fallback;
+                                    const mainImg = booking.hotel?.images?.find(img => img.is_main) ?? booking.hotel?.images?.[0]
+                                    const imgSrc = mainImg ? `http://${imageHostUrl}/api${mainImg.image_url}` : fallback
 
                                     return (
                                         <div className="flex items-center p-4 bg-white/5 rounded-xl mt-4" key={booking.id}>
-                                            <img src={`http://${imageHostUrl}/api` + mainImage} alt="" className="w-24 h-16 rounded-md object-cover"/>
+                                            <img src={imgSrc} alt="" className="w-24 h-16 rounded-md object-cover"/>
                                             <div className="flex-1 ml-4">
                                                 <div className="font-semibold">{booking?.hotel.name}</div>
-                                                <p className="text-sm text-white/70">{formatBookingDates(booking.date_from, booking.date_to)} • {booking.room.capacity} guest</p>
+                                                <p className="text-sm text-white/70 flex items-center"><CalendarDays size={16} className="mr-1" />{formatBookingDates(booking.date_from, booking.date_to)} • {booking.room.capacity} guest</p>
                                                 <p className="text-sm text-indigo-300">Status: {booking.status == "pending" && "Pending"} {booking.status == "confirmed" && "Confirmed"} {booking.status == "cancelled" && "Cancelled"} {booking.status == "completed" && "Completed"}</p>
                                             </div>
                                             <div className="flex">
                                                 {booking.status == "pending" ? <button className="rounded-md bg-blue-500/20 hover:bg-blue-500/40 py-2 px-4 transition" onClick={() => navigate("/booking/pay", {state: { id: booking.id, total_price: booking.total_price, name_hotel: booking.hotel.name, name_room: booking.room.name, date_from: booking.date_from, date_to: booking.date_to, guests: booking.room.capacity }})}>Pay</button> : <button className="rounded-md bg-blue-500/20 hover:bg-blue-500/40 py-2 px-4 transition" onClick={() => navigate(`/hotels/${booking?.hotel.id}`)}>View</button>}
                                                 {booking.status == "pending" || booking.status == "confirmed" ? (
-                                                    <button className="ml-4 px-3 py-1 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 transition" onClick={() => handelCancelBooking(booking.id)}>Cancel</button>
+                                                    <button className="ml-4 px-3 py-1 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 transition" onClick={() => handleCancelBooking(booking.id)}>Cancel</button>
                                                 ) : null }                                          
                                             </div>
                                         </div>
@@ -188,7 +185,7 @@ function Profile() {
                                         <div className="flex p-4 bg-white/5 rounded-xl mt-4" key={favorite.id}>
                                             <img src={`http://${imageHostUrl}/api` + mainImage} alt="" className="w-24 h-16 rounded-md object-cover"/>
                                             <div className="flex-1 ml-4">
-                                                <div className="font-semibold hover:underline" onClick={() => navigate(`/hotels/${favorite.hotel_id}`)}>{favorite.hotel.name}</div>
+                                                <div className="font-semibold hover:underline" onClick={() => navigate(`/hotels/${favorite.hotel.id}`)}>{favorite.hotel.name}</div>
                                                 <p className="text-sm text-white/70">from: ${favorite.hotel.price_per_night}</p>
                                             </div>
                                         </div>

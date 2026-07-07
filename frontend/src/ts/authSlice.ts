@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from 'axios'
 import api from "../ts/axiosInstance";
-import type { Hotel } from "../utils/types";
+import type { FavoriteHotel } from "./types";
 const apiUrl = import.meta.env.VITE_API_URL;
 
 interface RegisterState {
@@ -20,18 +20,8 @@ interface User {
     id: number,
     username: string,
     email: string,
-    password_hash: string,
     is_verified: boolean,
-    create_at: string,
-    avatar_url: string
-}
-
-interface FavoriteHotel {
-    id: number
-    user_id: number,
-    hotel_id: number,
-    created_at: string
-    hotel: Hotel
+    created_at: string,
 }
 
 interface stateInitial {
@@ -115,7 +105,7 @@ export const fetchLogin = createAsyncThunk<User, LoginState, { rejectValue: stri
 export const fetchLogout = createAsyncThunk< void, void, { rejectValue: string }>("auth/logout", async ( _, {rejectWithValue} ) => {
     try{
 
-        axios.post(`${apiUrl}/logout`, {}, {
+        await axios.post(`${apiUrl}/logout`, {}, {
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             withCredentials: true,
         })

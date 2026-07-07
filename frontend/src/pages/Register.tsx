@@ -91,7 +91,7 @@ function Register () {
                         <input type="password" placeholder="Repeat password" className="py-2 w-full px-2 border border-white/10 rounded-lg" value={password2} onChange={(e) => setPassword2(e.target.value)}/>
                     </div>
                     <div>
-                        <button className="bg- w-full py-2 rounded-md bg-blue-500/20 hover:bg-blue-500/40" type="submit">Create Account</button>
+                        <button className="w-full py-2 rounded-md bg-blue-500/20 hover:bg-blue-500/40" type="submit">Create Account</button>
                     </div>
                 </form>
             </div>

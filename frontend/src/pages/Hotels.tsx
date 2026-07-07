@@ -1,9 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
-import type { Hotel, Facilities } from "../utils/types";
+import type { Hotel, Facility } from "../ts/types";
 import api from "../ts/axiosInstance";
 import { useNotify } from "../components/Notify";
-import axios from "axios";
+import { isAxiosError } from "axios";
+import { MapPin } from "lucide-react";
+import { StarRating } from "../components/StarRating";
 
 function Hotels() {
     const navigate = useNavigate();
@@ -15,7 +17,7 @@ function Hotels() {
     const [date_from, setDate_from] = useState("")
     const [date_to, setDate_to] = useState("")
     const [guests, setGuests] = useState(1)
-    const [facilities, setFacilities] = useState<Facilities[]>([])
+    const [facilities, setFacilities] = useState<Facility[]>([])
     const [activeFacilities, setActiveFacilities] = useState<number[]>([])
     const [stars, setStars] = useState(0)
     const [autoSearch, setAutoSearch] = useState(false)
@@ -50,7 +52,7 @@ function Hotels() {
             setAllHotels(res_hotel.data)
           }
         } catch(err: unknown) {
-            if (axios.isAxiosError(err)) {
+            if (isAxiosError(err)) {
               return notify(err.response?.data?.detail, "error")
             } else {
               return notify("Unknown error", "error")
@@ -63,7 +65,7 @@ function Hotels() {
 
     useEffect(() => {
       if (autoSearch  && city && date_from && date_to && guests) {
-        handelsearch(null)
+        handleSearch(null)
         setAutoSearch(false)
 
         navigate(location.pathname, {
@@ -73,18 +75,19 @@ function Hotels() {
       }
     }, [autoSearch, city, date_from, date_to, guests])
 
-    const handelsearch = async(e: React.FormEvent | null) => {
+    const handleSearch = async(e: React.FormEvent | null) => {
       if (e) e.preventDefault();
 
-      if (city.length <= 0) return notify("Enter city", "msg");
-      if (date_from.length <= 0) return notify("Enter your arrival date", "msg");
-      if (date_to.length <= 0) return notify("Enter your departure date", "msg");
+      if (!city) return notify("Enter city", "msg");
+      if (!date_from) return notify("Enter your arrival date", "msg");
+      if (!date_to) return notify("Enter your departure date", "msg");
+      if (date_from >= date_to) return notify("Check-out date must be after check-in", "msg");
 
       try {
         const res = await api.get(`/hotels/search?city=${city}&date_from=${date_from}&date_to=${date_to}&guests=${guests}`)
         setAllHotels(res.data)
       } catch(err: unknown) {
-          if (axios.isAxiosError(err)) {
+          if (isAxiosError(err)) {
             return notify(err.response?.data?.detail, "error")
           } else {
             return notify("Unknown error", "error")
@@ -96,7 +99,7 @@ function Hotels() {
       setActiveFacilities(prev => prev.includes(id) ? prev.filter(af => af !== id) : [...prev, id])
     }
 
-    const handelfilter = async(e: React.FormEvent) => {
+    const handlefilter = async(e: React.FormEvent) => {
       e.preventDefault()
       
       let filtered = [...allHotels]
@@ -118,19 +121,15 @@ function Hotels() {
       setHotels(filtered)
     }
 
-    const handleClearShearch = async () => {
-      if (city.length <= 0) return notify("Enter city", "msg");
-      if (date_from.length <= 0) return notify("Enter your arrival date", "msg");
-      if (date_to.length <= 0) return notify("Enter your departure date", "msg");
-      try {
-        const res = await api.get("/hotels")
-        setAllHotels(res.data)
-      } catch(err: unknown) {
-          if (axios.isAxiosError(err)) {
-            return notify(err.response?.data?.detail, "error")
-          } else {
-            return notify("Unknown error", "error")
-          }
+    const handleClearSearch = async () => {
+        try {
+            const res = await api.get("/hotels")
+            setAllHotels(res.data)
+            setActiveFilter(false)
+            setHotels([])
+        } catch(err) {
+            if (isAxiosError(err)) return notify(err.response?.data?.detail, "error")
+            notify("Unknown error", "error")
         }
     }
 
@@ -138,7 +137,7 @@ function Hotels() {
       <>
         <div className="max-w-7xl mx-auto px-6 pb-20">
             <div className="mt-6 glass rounded-2xl px-6 py-4 shadow-lg mb-8 bg-white/4">
-                <form onSubmit={handelsearch} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                   <div>
                     <label className="text-sm text-gray-300">Where</label>
                     <input type="text" placeholder="City" className="py-2 px-2 border border-white/10 rounded-md w-full bg-transparent" value={city} onChange={(e) => setCity(e.target.value)}/>
@@ -157,16 +156,17 @@ function Hotels() {
                       <select className="py-2 px-2 border border-white/10 rounded-md w-full bg-transparent" value={guests} onChange={(e) => setGuests(Number(e.target.value))}>
                         <option className="text-black" value={1}>1 adult</option>
                         <option className="text-black" value={2}>2 adults</option>
+                        <option className="text-black" value={3}>3 adults</option>
                         <option className="text-black" value={4}>Family — 2 adults, 2 children</option>
                       </select>
                       <button type="submit" className="py-2 px-4 bg-blue-500/20 hover:bg-blue-500/40 rounded-md whitespace-nowrap transition">Search</button>
-                      <button type="button" className="px-4 py-2 rounded-md border border-white/10 whitespace-nowrap" onClick={handleClearShearch}>Reset</button>
+                      <button type="button" className="px-4 py-2 rounded-md border border-white/10 whitespace-nowrap" onClick={handleClearSearch}>Reset</button>
                     </div>
                   </div>
                 </form>
             </div>
             <div className="flex gap-8">
-              <form className="flex-1" onSubmit={handelfilter}>
+              <form className="flex-1" onSubmit={handlefilter}>
                 <div className="bg-white/4 p-4 rounded-lg flex flex-col gap-4">
                   <h4>Filters</h4>
                   <div>
@@ -206,40 +206,44 @@ function Hotels() {
                   </div>
                 </div>
               </form>
-              <div className="flex-3 flex-col">
+              <div className="flex-[3] flex-col">
                 {hotelsToRender.length == 0 ? (
                   <div className="flex items-center justify-center">
                     <h1>No hotels found for your search</h1>
                   </div>
-                  ) : hotelsToRender.map(hotel => 
-                    <div className="bg-white/4 p-4 flex rounded-lg mb-4" key={hotel.id}>
-                      <div className="flex flex-3">
-                        <div className="mr-4 shrink-0">
-                          <img className="w-50 h-50 rounded-lg" src={hotel.images?.length ? `http://${imageHostUrl}/api` + hotel.images.find(img => img.is_main)?.image_url || `http://${imageHostUrl}/api` + hotel.images[0].image_url : fallback}  alt=""/>
-                        </div>
-                        <div>
-                          <a onClick={() => navigate(`/hotels/${hotel.id}`)} translate="no" className="font-bold cursor-pointer hover:underline">{hotel.name}</a>
-                          <div className="flex mt-2 mb-3 items-center">
-                            <svg className="h-6 w-6" viewBox="0 0 32 32" fill="currentColor"><path d="M16,1C9.925,1,5,5.925,5,12c0,10,10,19,11,19s11-9,11-19C27,5.925,22.075,1,16,1z M16,16 c-2.209,0-4-1.791-4-4c0-2.209,1.791-4,4-4s4,1.791,4,4C20,14.209,18.209,16,16,16z"></path></svg> <p className="text-sm">Hotel in <span translate="no"> {hotel.city}</span></p>
+                  ) : hotelsToRender.map(hotel => {
+                        const mainImage = hotel.images?.find(img => img.is_main) ?? hotel.images?.[0]
+                        const imgSrc = mainImage ? `http://${imageHostUrl}/api${mainImage.image_url}` : fallback
+
+                        return (
+                          <div className="bg-white/4 p-4 flex rounded-lg mb-4" key={hotel.id}>
+                            <div className="flex flex-[3]">
+                              <div className="mr-4 shrink-0">
+                                <img className="w-52 h-52 rounded-lg" src={imgSrc} alt={hotel.name}/>
+                              </div>
+                              <div>
+                                <button onClick={() => navigate(`/hotels/${hotel.id}`)} translate="no" className="font-bold hover:underline text-left">{hotel.name}</button>
+                                <div className="flex mt-2 mb-3 items-center">
+                                  <MapPin size={28} className="" /> <p className="ml-1 text-sm">Hotel in <span translate="no"> {hotel.city}</span></p>
+                                </div>
+                                <p className="line-clamp-3 text-sm mr-2">{hotel.description}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="flex flex-1 flex-col text-right h-52">
+                                <div className="flex justify-end items-center gap-2 mt-2 mr-2">
+                                  <StarRating rating={hotel.rating}/>
+                                </div>
+                                <div className="mt-auto mb-6">
+                                  <p className="text-xs text-white/80 mb-1">Price from:</p>
+                                  <h4 className="font-bold text-xl">${hotel.price_per_night}</h4>
+                                </div>
+                                <button className="py-2 px-4 bg-blue-500/20 hover:bg-blue-500/40 rounded-md transition" onClick={() => navigate(`/hotels/${hotel.id}`)}>View details</button>
+                              </div>
+                            </div>
                           </div>
-                          <p className="line-clamp-3 text-sm mr-2">{hotel.description}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex flex-1 flex-col text-right h-50">
-                          <div className="flex justify-end items-center">
-                            <h4 className="font-semibold mr-2">Stars: </h4><h5 className="bg-blue-500/20 py-1 px-3 rounded-md">{hotel.rating}</h5>
-                          </div>
-                          <div className="mt-auto mb-6">
-                            <p className="text-xs text-white/80 mb-1">Price from:</p>
-                            <h4 className="font-bold text-xl text-green-600">${hotel.price_per_night}</h4>
-                          </div>
-                          <button className="py-2 px-4 bg-blue-500/20 hover:bg-blue-500/40 rounded-md transition" onClick={() => navigate(`/hotels/${hotel.id}`)}>View details</button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                }
+                        )
+                  })}
               </div>
             </div>
         </div>    

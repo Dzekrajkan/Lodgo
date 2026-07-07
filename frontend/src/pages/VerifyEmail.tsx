@@ -24,19 +24,17 @@ function VerifyEmail() {
             return
         }
 
-        else {
-            const fetchToken = async () => {
-                try {
-                    const res = await api.get(`/auth/verify?&token=${token}`)
-                    setMessage(res.data.success || "Email confirmed")
-                    setStatus("success");
-                } catch(err: any) {
-                    setMessage(err.response?.data?.detail || "Confirmation error")
-                    setStatus("error")
-                }
+        const fetchToken = async () => {
+            try {
+                const res = await api.get(`/auth/verify?token=${token}`)
+                setMessage(res.data.success || "Email confirmed")
+                setStatus("success");
+            } catch(err: any) {
+                setMessage(err.response?.data?.detail || "Confirmation error")
+                setStatus("error")
             }
-        fetchToken()
         }
+        fetchToken()      
     }, [isAuthenticated, token])
 
     return (
@@ -56,7 +54,7 @@ function VerifyEmail() {
                         </div>
                         <h2 className="text-xl font-semibold">Email Verified</h2>
                         <p className="text-white/60 text-sm">{message}</p>
-                        <button onClick={() => navigate("/login")} className="mt-4 w-full py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 transition font-semibold">Перейти ко входу</button>
+                        <button onClick={() => navigate("/login")} className="mt-4 w-full py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 transition font-semibold">Go to Sign In</button>
                     </div>
                 )}
 
@@ -67,7 +65,7 @@ function VerifyEmail() {
                         </div>
                         <h2 className="text-xl font-semibold">Verification Error</h2>
                         <p className="text-white/60 text-sm">{message}</p>
-                        <button onClick={() => navigate("/register")} className="mt-4 w-full py-2 rounded-lg bg-red-500/20 hover:bg-red-500/40 transition font-semibold">Зарегистрироваться снова</button>
+                        <button onClick={() => navigate("/register")} className="mt-4 w-full py-2 rounded-lg bg-red-500/20 hover:bg-red-500/40 transition font-semibold">Register Again</button>
                     </div>
                 )}
             </div>

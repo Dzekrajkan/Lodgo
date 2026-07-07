@@ -32,11 +32,10 @@ function Login () {
     try {
       await dispatch(fetchLogin({ email, password })).unwrap();
       navigate("/");
-    } catch (err: any) {
-        notify(err || "Login failed", "error")
-      }
+    } catch (err) {
+        notify(err as string || "Login failed", "error")
     }
-
+    }
 
   return (
     <>

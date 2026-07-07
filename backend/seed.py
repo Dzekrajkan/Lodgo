@@ -50,8 +50,8 @@ def seed_data():
         if not hotels:
             hotel_1 = models.Hotel(
                 owner_id=user.id,
-                name="Ocean View Resort",
-                description="Beautiful seaside resort with panoramic ocean views.",
+                name="Coral Cove Inn",
+                description="A charming Mediterranean-style inn nestled in the heart of Barcelona. Surrounded by lush gardens and palm trees, it offers a warm and relaxing escape from the city buzz.",
                 address="12 Beach Avenue",
                 city="Barcelona",
                 country="Spain",
@@ -62,10 +62,10 @@ def seed_data():
             )
             hotel_2 = models.Hotel(
                 owner_id=user.id,
-                name="Mountain Escape Lodge",
-                description="Cozy mountain lodge perfect for relaxing vacations.",
+                name="The Urban Canvas Hotel",
+                description="A stylish urban hotel in the city center, blending industrial brick architecture with modern design. Perfect for business travelers and city explorers alike.",
                 address="45 Alpine Road",
-                city="Innsbruck",
+                city="Vienna",
                 country="Austria",
                 latitude="47.2692",
                 longitude="11.4041",
@@ -82,23 +82,34 @@ def seed_data():
 
         if not db.query(models.HotelImage).first():
             db.add_all([
-                models.HotelImage(hotel_id=hotel_1.id, image_url=f"/media/hotels/{hotel_1.id}/hotel.jpg", is_main=True),
-                models.HotelImage(hotel_id=hotel_1.id, image_url=f"/media/hotels/{hotel_1.id}/room.jpg", is_main=False),
-                models.HotelImage(hotel_id=hotel_1.id, image_url=f"/media/hotels/{hotel_1.id}/yard.jpg", is_main=False),
-                models.HotelImage(hotel_id=hotel_2.id, image_url=f"/media/hotels/{hotel_2.id}/hotel.jpg", is_main=True),
-                models.HotelImage(hotel_id=hotel_2.id, image_url=f"/media/hotels/{hotel_2.id}/room.jpg", is_main=False),
+                models.HotelImage(hotel_id=hotel_1.id, image_url=f"/media/hotels/{hotel_1.id}/1.jpg", is_main=True),
+                models.HotelImage(hotel_id=hotel_1.id, image_url=f"/media/hotels/{hotel_1.id}/2.jpg", is_main=False),
+                models.HotelImage(hotel_id=hotel_2.id, image_url=f"/media/hotels/{hotel_2.id}/1.jpg", is_main=True),
+                models.HotelImage(hotel_id=hotel_2.id, image_url=f"/media/hotels/{hotel_2.id}/2.jpg", is_main=False),
             ])
             db.commit()
             print("Hotel images created")
 
         if not db.query(models.Room).first():
+            room_h1_1 = models.Room(hotel_id=hotel_1.id, name="Standard Double Room", description="Comfortable room with a double bed and city view.", price_per_night=120, capacity=2, quantity=5)
+            room_h1_2 = models.Room(hotel_id=hotel_1.id, name="Deluxe Sea View Room", description="Spacious room with balcony and sea view.", price_per_night=210, capacity=3, quantity=3)
+            room_h2_1 = models.Room(hotel_id=hotel_2.id, name="Family Mountain Suite", description="Large suite perfect for families with mountain views.", price_per_night=190, capacity=4, quantity=2)
+            db.add_all([room_h1_1, room_h1_2, room_h2_1])
+            db.commit()
+            db.refresh(room_h1_1)
+            db.refresh(room_h1_2)
+            db.refresh(room_h2_1)
+            print("Rooms created")
+
             db.add_all([
-                models.Room(hotel_id=hotel_1.id, name="Standard Double Room", description="Comfortable room with a double bed and city view.", price_per_night=120, capacity=2, quantity=5),
-                models.Room(hotel_id=hotel_1.id, name="Deluxe Sea View Room", description="Spacious room with balcony and sea view.", price_per_night=210, capacity=3, quantity=3),
-                models.Room(hotel_id=hotel_2.id, name="Family Mountain Suite", description="Large suite perfect for families with mountain views.", price_per_night=190, capacity=4, quantity=2),
+                models.RoomImage(room_id=room_h1_1.id, image_url=f"/media/rooms/{room_h1_1.id}/1.jpg", is_main=True),
+                models.RoomImage(room_id=room_h1_1.id, image_url=f"/media/rooms/{room_h1_1.id}/2.jpg", is_main=False),
+                models.RoomImage(room_id=room_h1_2.id, image_url=f"/media/rooms/{room_h1_2.id}/1.jpg", is_main=True),
+                models.RoomImage(room_id=room_h1_2.id, image_url=f"/media/rooms/{room_h1_2.id}/2.jpg", is_main=False),
+                models.RoomImage(room_id=room_h2_1.id, image_url=f"/media/rooms/{room_h2_1.id}/1.jpg", is_main=True),
             ])
             db.commit()
-            print("Rooms created")
+            print("Room images created")
 
         if not db.query(models.Service).first():
             db.add_all([

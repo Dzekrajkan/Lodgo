@@ -24,7 +24,7 @@ export const NotifyProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<NotifyItem[]>([])
 
   const notify = (text: string, type: NotifyType = "msg") => {
-    const id = Date.now()
+    const id = Date.now() + Math.random()
 
     setItems(prev => [...prev, { id, text, type }])
 

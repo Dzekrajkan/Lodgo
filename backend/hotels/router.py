@@ -8,7 +8,7 @@ from backend import models
 from backend.auth.dependencies import get_current_user
 from backend.database import get_db
 from backend.hotels import schemas
-from backend.hotels.service import get_hotel_rating, get_redis, save_hotel_image
+from backend.hotels.service import get_hotel_rating, get_redis, save_hotel_image, save_room_image
 from backend.schemas import MessageOut
 
 router = APIRouter(prefix="/api", tags=["hotels"])
@@ -41,9 +41,6 @@ async def get_hotels(db: Session = Depends(get_db), redis_client: Optional[redis
         hotel.rating, hotel.reviews_count = await get_hotel_rating(db, redis_client, hotel)
     return hotels
 
-# ВАЖНО: этот роут должен быть зарегистрирован ДО /hotels/{hotel_id},
-# иначе "search" попытается смэтчиться как hotel_id и упадёт 422
-# раньше, чем FastAPI попробует этот маршрут.
 @router.get("/hotels/search", response_model=list[schemas.HotelOut])
 async def search_hotels(city: str = Query(...), date_from: date = Query(...), date_to: date = Query(...), guests: int = Query(..., ge=1), db: Session = Depends(get_db), redis_client: Optional[redis.Redis] = Depends(get_redis)):
     if date_from >= date_to:
@@ -141,6 +138,7 @@ def get_rooms(hotel_id: int = Path(...), date_from: date = Query(...), date_to: 
     )
     rooms = (db.query(models.Room, (models.Room.quantity - func.coalesce(busy_room_ids.c.booked_count, 0)).label("available_count"))
         .outerjoin(busy_room_ids, models.Room.id == busy_room_ids.c.room_id)
+        .options(selectinload(models.Room.images))
         .filter(
             models.Room.hotel_id == hotel_id,
             models.Room.capacity == guests,
@@ -157,6 +155,7 @@ def get_rooms(hotel_id: int = Path(...), date_from: date = Query(...), date_to: 
             "price_per_night": room.price_per_night,
             "quantity": room.quantity,
             "available": available_count,
+            "images": room.images,
         }
         for room, available_count in rooms
     ]
@@ -180,6 +179,13 @@ def create_room(room: schemas.RoomCreate, hotel_id: int = Path(...), db: Session
     db.commit()
     db.refresh(new_room)
     return new_room
+
+@router.post("/hotels/{hotel_id}/rooms/{room_id}/upload-image", response_model=schemas.RoomImageOut)
+def post_images_rooms(hotel_id: int = Path(...), room_id: int = Path(...), is_main: bool = Query(...), file: UploadFile = File(...), db: Session = Depends(get_db)):
+    room = db.query(models.Room).filter(models.Room.id == room_id, models.Room.hotel_id == hotel_id).first()
+    if not room:
+        raise HTTPException(400, "There is no such room")
+    return save_room_image(db, room_id, file, is_main)
 
 
 @router.get("/favorite", response_model=list[schemas.FavoriteHotelOut])
@@ -218,6 +224,6 @@ def add_favorite(favorite: schemas.FavoriteHotelCreate, status: str = Query(...)
             raise HTTPException(400, "You don't have this hotel in your favorites.")
         db.delete(favorite_obj)
         db.commit()
-        return {"status": "removed"}
+        return {"success": "removed"}
     
     raise HTTPException(400, "Invalid status. Use 'add' or 'remove'.")

@@ -24,6 +24,13 @@ class ServiceOut(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class RoomImageOut(BaseModel):
+    id: int
+    image_url: str
+    is_main: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
 class RoomCreate(BaseModel):
     hotel_id: int
     name: str
@@ -40,6 +47,7 @@ class RoomOut(BaseModel):
     price_per_night: int
     capacity: int
     quantity: int
+    images: list[RoomImageOut] = []
 
     model_config = ConfigDict(from_attributes=True)
 

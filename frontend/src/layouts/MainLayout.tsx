@@ -2,21 +2,17 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch, RootState } from "../ts/store"
 import { fetchLogout } from "../ts/authSlice"
+import { Avatar } from "../components/Avatar"
 
 function MainLayout() {
   const navigate = useNavigate()
   const dispatch = useDispatch<AppDispatch>()
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated)
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
 
   return (
     <div className="min-h-screen bg-[#070B14] text-white relative overflow-hidden">
       <div className="flex justify-between max-w-7xl mx-auto p-6 bg-white/2 rounded-2xl mt-6 border border-white/10 backdrop-blur-xl mb-5">
-        <a href="">
-          <div>
-
-          </div>
-          <span className="font-bold text-2xl" onClick={() => navigate("/")} translate="no">Lodgo</span>
-        </a>
+        <button onClick={() => navigate("/")} className="font-bold text-2xl">Lodgo</button>
 
         <nav role="navigation" className="gap-6 flex items-center text-sm">
           <NavLink to="/" className="text-white/70 hover:text-white transition">Home</NavLink>
@@ -25,15 +21,17 @@ function MainLayout() {
 
         <div className="gap-3 flex">
           {isAuthenticated == true ? 
-          <>
-            <div className="bg-white rounded-full w-10 h-10" onClick={() => navigate("/profile")}></div>
-            <button className="px-3 py-1 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 transition" onClick={() => {dispatch(fetchLogout())}}>Logout</button>
-          </>
-           : 
-           <>
-            <button onClick={() => navigate("login")} className="py-2 px-4 text-sm">Sign in</button>
-            <button onClick={() => navigate("register")} className="bg-gradient-to-r bg-blue-500/20 hover:bg-blue-500/40 p-2 px-4 rounded-md font-semibold text-white hover:scale-105 transition">Sign up</button>
-           </> 
+            <>
+              <button onClick={() => navigate("/profile")}>
+                  <Avatar username={user?.username || "?"} />
+              </button>
+              <button className="px-3 py-1 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 transition" onClick={() => { dispatch(fetchLogout()).then(() => navigate("/")) }}>Logout</button>
+            </>
+            : 
+            <>
+              <button onClick={() => navigate("/login")} className="py-2 px-4 text-sm">Sign in</button>
+              <button onClick={() => navigate("/register")} className="bg-gradient-to-r bg-blue-500/20 hover:bg-blue-500/40 p-2 px-4 rounded-md font-semibold text-white hover:scale-105 transition">Sign up</button>
+            </> 
           }
         </div>
       </div>

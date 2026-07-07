@@ -58,6 +58,16 @@ class Hotel(Base):
     services = relationship("Service", back_populates="hotels")
     reviews = relationship("Review", back_populates="hotel", cascade="all, delete")
 
+class HotelImage(Base):
+    __tablename__ = "hotel_images"
+
+    id = Column(Integer, primary_key=True)
+    hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
+    image_url = Column(String, nullable=False)
+    is_main = Column(Boolean, default=False)
+
+    hotel = relationship("Hotel", back_populates="images")
+
 class Room(Base):
     __tablename__ = "rooms"
 
@@ -70,7 +80,18 @@ class Room(Base):
     quantity = Column(Integer, default=1)
 
     hotel = relationship("Hotel", back_populates="rooms")
+    images = relationship("RoomImage", back_populates="room", cascade="all, delete")
     bookings = relationship("Booking", back_populates="room")
+
+class RoomImage(Base):
+    __tablename__ = "room_images"
+
+    id = Column(Integer, primary_key=True)
+    room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False)
+    image_url = Column(String, nullable=False)
+    is_main = Column(Boolean, default=False)
+
+    room = relationship("Room", back_populates="images")
 
 class BookingStatus(enum.Enum):
     pending = "pending"
@@ -98,16 +119,6 @@ class Booking(Base):
     hotel = relationship("Hotel", back_populates="bookings")
     room = relationship("Room", back_populates="bookings")
     services = relationship("Service",secondary=booking_services,backref="bookings")
-
-class HotelImage(Base):
-    __tablename__ = "hotel_images"
-
-    id = Column(Integer, primary_key=True)
-    hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
-    image_url = Column(String, nullable=False)
-    is_main = Column(Boolean, default=False)
-
-    hotel = relationship("Hotel", back_populates="images")
 
 class Facility(Base):
     __tablename__ = "facilities"

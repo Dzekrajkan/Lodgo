@@ -8,7 +8,8 @@ from backend import models
 
 MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
-MEDIA_ROOT = "backend/media/hotels"
+HOTEL_MEDIA_ROOT = "backend/media/hotels"
+ROOM_MEDIA_ROOT = "backend/media/rooms"
 
 def get_redis(request: Request) -> Optional[redis.Redis]:
     return getattr(request.app.state, "redis_client", None)
@@ -59,7 +60,7 @@ def save_hotel_image(db: Session, hotel_id: int, file: UploadFile, is_main: bool
     if len(contents) > MAX_IMAGE_SIZE:
         raise HTTPException(400, "File is too large")
 
-    folder = f"{MEDIA_ROOT}/{hotel_id}"
+    folder = f"{HOTEL_MEDIA_ROOT}/{hotel_id}"
     os.makedirs(folder, exist_ok=True)
 
     safe_name = f"{uuid.uuid4().hex}{ext}"
@@ -69,6 +70,35 @@ def save_hotel_image(db: Session, hotel_id: int, file: UploadFile, is_main: bool
 
     image_url = f"/media/hotels/{hotel_id}/{safe_name}"
     new_image = models.HotelImage(hotel_id=hotel_id, image_url=image_url, is_main=is_main)
+    db.add(new_image)
+    db.commit()
+    db.refresh(new_image)
+    return new_image
+
+def save_room_image(db: Session, room_id: int, file: UploadFile, is_main: bool) -> models.RoomImage:
+    if is_main:
+        existing_main = db.query(models.RoomImage).filter(models.RoomImage.room_id == room_id, models.RoomImage.is_main == True).first()
+        if existing_main:
+            raise HTTPException(400, "The main image of the room already exists")
+
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        raise HTTPException(400, "Unsupported file type")
+
+    contents = file.file.read()
+    if len(contents) > MAX_IMAGE_SIZE:
+        raise HTTPException(400, "File is too large")
+
+    folder = f"{ROOM_MEDIA_ROOT}/{room_id}"
+    os.makedirs(folder, exist_ok=True)
+
+    safe_name = f"{uuid.uuid4().hex}{ext}"
+    file_path = f"{folder}/{safe_name}"
+    with open(file_path, "wb") as buffer:
+        buffer.write(contents)
+
+    image_url = f"/media/rooms/{room_id}/{safe_name}"
+    new_image = models.RoomImage(room_id=room_id, image_url=image_url, is_main=is_main)
     db.add(new_image)
     db.commit()
     db.refresh(new_image)

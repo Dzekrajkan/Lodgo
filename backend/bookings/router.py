@@ -19,12 +19,17 @@ def get_bookings(user: models.User = Depends(get_current_user), status: str = Qu
         )
 
     if status == "last":
-        return (
+        booking = (
             db.query(models.Booking)
             .filter(models.Booking.user_id == user.id, models.Booking.status == models.BookingStatus.confirmed)
             .order_by(desc(models.Booking.created_at))
             .options(selectinload(models.Booking.hotel).selectinload(models.Hotel.images), selectinload(models.Booking.room)).first()
         )
+
+        if not booking:
+            return []
+        
+        return booking
     
     raise HTTPException(400, "Invalid status. Use 'all' or 'last'.")
 

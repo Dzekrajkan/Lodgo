@@ -3,7 +3,7 @@ import type { RootState } from "../ts/store"
 import { useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import api from "../ts/axiosInstance"
-import type { Hotel, Room, Services } from "../utils/types"
+import type { Hotel, Room, Service } from "../ts/types"
 import { useNotify } from "../components/Notify"
 import axios from "axios"
 
@@ -24,19 +24,19 @@ function CreateBooking() {
         date_to: string,
         guests: number
     }
-    const [selectedServices, setSelectedServices] = useState<Services[]>([])
+    const [selectedServices, setSelectedServices] = useState<Service[]>([])
     const servicesTotal = selectedServices.reduce((sum, service) => sum + service.price, 0)
     const nights = Math.ceil((new Date(date_to).getTime() - new Date(date_from).getTime()) / (1000 * 60 * 60 * 24))
     const totalPrice = room.price_per_night * nights + servicesTotal
 
-    const handelGetDataAccount = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleGetDataAccount = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked
         setUseAccountData(checked)
 
         if (checked) {
-            const [fName, lName] = user?.username.split(" ") || ["", ""]
-            setFirstName(fName)
-            setLastName(lName)
+            const parts = user?.username.split(" ") || []
+            setFirstName(parts[0] || "")
+            setLastName(parts[1] || "")
             setEmail(String(user?.email))
         } else {
             setFirstName("")
@@ -45,7 +45,7 @@ function CreateBooking() {
         }
     }
 
-    const toggleService = (service: Services) => {
+    const toggleService = (service: Service) => {
         setSelectedServices(prev => {
             const exists = prev.find(s => s.id === service.id)
 
@@ -57,12 +57,20 @@ function CreateBooking() {
         })
     }
 
-    const handelCreateBooking = async () => {
+    const handleCreateBooking = async () => {
+        if (!firstName) return notify("Enter first name", "msg")
+        if (!lastName) return notify("Enter last name", "msg")
+        if (!email) return notify("Enter email", "msg")
         try {
             const res = await api.post(`/bookings`, { 
-                hotel_id: hotel.id, room_id: room.id, date_from: date_from, date_to: date_to, guest_first_name: firstName, guest_last_name: lastName, guest_email: email, service_ids: selectedServices.map(s => s.id),
-                headers: { "Content-Type": "application/json" },
-                withCredentials: true,
+                hotel_id: hotel.id,
+                room_id: room.id,
+                date_from: date_from,
+                date_to: date_to,
+                guest_first_name: firstName,
+                guest_last_name: lastName,
+                guest_email: email,
+                service_ids: selectedServices.map(s => s.id)
             });
             const data = res.data
             navigate("/booking/pay", {
@@ -94,7 +102,7 @@ function CreateBooking() {
                         <h3 className="text-lg font-semibold">Guest Information</h3>
                         <div className="flex items-center">
                             <div>
-                                <input type="checkbox" checked={useAccountData} onChange={handelGetDataAccount}/>
+                                <input type="checkbox" checked={useAccountData} onChange={handleGetDataAccount}/>
                             </div>
                             <span className="text-xs text-white/80 group-hover:text-white transition">Use my account data</span>
                         </div>
@@ -120,7 +128,7 @@ function CreateBooking() {
                         </div>
                         <div>
                             <label className="text-sm text-gray-300">Guests</label>
-                            <select className="py-2 px-2 border border-white/10 rounded-md w-full bg-transparent" defaultValue={Number(guests)}>
+                            <select className="py-2 px-2 border border-white/10 rounded-md w-full bg-transparent" value={Number(guests)} disabled onChange={() => {}}>
                                 <option className="text-black" value={1}>1 adult</option>
                                 <option className="text-black" value={2}>2 adults</option>
                                 <option className="text-black" value={4}>Family — 2 adults, 2 children</option>
@@ -175,7 +183,7 @@ function CreateBooking() {
                     </div>
                 </div>
                 <div className="p-6 rounded-2xl bg-white/4">
-                    <button className="w-full py-3 rounded-md bg-blue-500/20 hover:bg-blue-500/40 transition" onClick={handelCreateBooking}>Proceed to Payment</button>
+                    <button className="w-full py-3 rounded-md bg-blue-500/20 hover:bg-blue-500/40 transition" onClick={handleCreateBooking}>Proceed to Payment</button>
                 </div>
             </aside>
 
