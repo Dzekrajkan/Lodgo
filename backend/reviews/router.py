@@ -15,7 +15,7 @@ def get_reviews(hotel_id: int = Path(...), db: Session = Depends(get_db)):
 
     return db.query(models.Review).filter(models.Review.hotel_id == hotel_id).options(selectinload(models.Review.user)).limit(20).all()
 
-@router.post("/review", response_model=schemas.ReviewOut)
+@router.post("/review", response_model=schemas.ReviewOut, status_code=201)
 def create_review(review: schemas.ReviewCreate, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     hotel = db.query(models.Hotel).filter(models.Hotel.id == review.hotel_id).first()
     if not hotel:

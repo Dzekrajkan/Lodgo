@@ -42,7 +42,7 @@ def refresh(request: Request, response: Response):
 
     return {"success": "Access token refreshed"}
 
-@router.post("/register", response_model=MessageOut)
+@router.post("/register", response_model=MessageOut, status_code=201)
 async def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     user_by_email = db.query(models.User).filter(models.User.email == user.email).first()
     if user_by_email:

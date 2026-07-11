@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api", tags=["hotels"])
 def get_facilities(db: Session = Depends(get_db)):
     return db.query(models.Facility).all()
 
-@router.post("/facilities", response_model=schemas.FacilityOut)
+@router.post("/facilities", response_model=schemas.FacilityOut, status_code=201)
 def post_facilities(facilities: schemas.FacilitiesCreate, db: Session = Depends(get_db)):
     new_facilities = models.Facility(name=facilities.name)
     db.add(new_facilities)
@@ -25,7 +25,7 @@ def post_facilities(facilities: schemas.FacilitiesCreate, db: Session = Depends(
     db.refresh(new_facilities)
     return new_facilities
 
-@router.post("/service", response_model=schemas.ServiceOut)
+@router.post("/service", response_model=schemas.ServiceOut, status_code=201)
 def post_service(service: schemas.ServiceCreate, db: Session = Depends(get_db)):
     new_service = models.Service(hotel_id=service.hotel_id, name=service.name, price=service.price)
     db.add(new_service)
@@ -82,7 +82,7 @@ async def get_hotel(hotel_id: int = Path(...), db: Session = Depends(get_db), re
 
     return hotel
 
-@router.post("/hotels", response_model=schemas.HotelOut)
+@router.post("/hotels", response_model=schemas.HotelOut, status_code=201)
 def create_hotel(hotel: schemas.HotelCreate, db: Session = Depends(get_db)):
     facility_ids = hotel.facility_ids
     service_ids = hotel.service_ids
@@ -118,7 +118,7 @@ def create_hotel(hotel: schemas.HotelCreate, db: Session = Depends(get_db)):
     new_hotel.reviews_count = 0
     return new_hotel
 
-@router.post("/hotels/{hotel_id}/upload-image", response_model=schemas.HotelImageOut)
+@router.post("/hotels/{hotel_id}/upload-image", response_model=schemas.HotelImageOut, status_code=201)
 def post_images_hotels(hotel_id: int = Path(...), is_main: bool = Query(...), file: UploadFile = File(...), db: Session = Depends(get_db)):
     return save_hotel_image(db, hotel_id, file, is_main)
 
@@ -128,6 +128,8 @@ def get_rooms(hotel_id: int = Path(...), date_from: date = Query(...), date_to: 
     hotel = db.query(models.Hotel).filter(models.Hotel.id == hotel_id).first()
     if not hotel:
         raise HTTPException(400, "There is no such hotel")
+    if date_from >= date_to:
+        raise HTTPException(400, "Please enter a valid date")
 
     busy_room_ids = (db.query(models.Booking.room_id, func.count(models.Booking.id).label("booked_count"))
         .filter(
@@ -161,7 +163,7 @@ def get_rooms(hotel_id: int = Path(...), date_from: date = Query(...), date_to: 
     ]
 
 
-@router.post("/hotels/{hotel_id}/rooms", response_model=schemas.RoomOut)
+@router.post("/hotels/{hotel_id}/rooms", response_model=schemas.RoomOut, status_code=201)
 def create_room(room: schemas.RoomCreate, hotel_id: int = Path(...), db: Session = Depends(get_db)):
     hotel = db.query(models.Hotel).filter(models.Hotel.id == hotel_id).first()
     if not hotel:
@@ -180,7 +182,7 @@ def create_room(room: schemas.RoomCreate, hotel_id: int = Path(...), db: Session
     db.refresh(new_room)
     return new_room
 
-@router.post("/hotels/{hotel_id}/rooms/{room_id}/upload-image", response_model=schemas.RoomImageOut)
+@router.post("/hotels/{hotel_id}/rooms/{room_id}/upload-image", response_model=schemas.RoomImageOut, status_code=201)
 def post_images_rooms(hotel_id: int = Path(...), room_id: int = Path(...), is_main: bool = Query(...), file: UploadFile = File(...), db: Session = Depends(get_db)):
     room = db.query(models.Room).filter(models.Room.id == room_id, models.Room.hotel_id == hotel_id).first()
     if not room:

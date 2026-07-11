@@ -8,9 +8,9 @@ from backend.bookings import schemas
 from backend.bookings import service as booking_service
 from backend.database import get_db
 
-router = APIRouter(prefix="/api/bookings", tags=["bookings"])
+router = APIRouter(prefix="/api", tags=["bookings"])
 
-@router.get("", response_model=Union[List[schemas.BookingsOut], schemas.BookingsOut])
+@router.get("/bookings", response_model=Union[List[schemas.BookingsOut], schemas.BookingsOut])
 def get_bookings(user: models.User = Depends(get_current_user), status: str = Query("all"), db: Session = Depends(get_db)):
     if status == "all":
         return (
@@ -33,11 +33,11 @@ def get_bookings(user: models.User = Depends(get_current_user), status: str = Qu
     
     raise HTTPException(400, "Invalid status. Use 'all' or 'last'.")
 
-@router.post("", response_model=schemas.BookingsOut)
+@router.post("/bookings", response_model=schemas.BookingsOut, status_code=201)
 def create_bookings(bookings: schemas.BookingsCreate, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return booking_service.create_booking(db, user, bookings)
 
-@router.post("/{id}/cancel", response_model=schemas.BookingStatusOut)
+@router.post("/bookings/{id}/cancel", response_model=schemas.BookingStatusOut)
 def cancel_bookings(id: int = Path(...), user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     booking = booking_service.get_booking_or_404(db, id)
     if booking.user_id != user.id:
@@ -52,7 +52,7 @@ def cancel_bookings(id: int = Path(...), user: models.User = Depends(get_current
     db.refresh(booking)
     return booking
 
-@router.post("/pay", response_model=schemas.BookingStatusOut)
+@router.post("/bookings/pay", response_model=schemas.BookingStatusOut)
 def pay_bookings(pay: schemas.BookingsPay, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     booking = booking_service.get_booking_or_404(db, pay.id)
     if booking.status == models.BookingStatus.cancelled:
@@ -69,7 +69,7 @@ def pay_bookings(pay: schemas.BookingsPay, user: models.User = Depends(get_curre
     db.refresh(booking)
     return booking
 
-@router.post("/{id}/completed", response_model=schemas.BookingStatusOut)
+@router.post("/bookings/{id}/completed", response_model=schemas.BookingStatusOut)
 def completed_bookings(id: int = Path(...), user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     booking = booking_service.get_booking_or_404(db, id)
     if booking.user_id != user.id:
