@@ -1,3 +1,4 @@
+from unittest.mock import AsyncMock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -54,6 +55,11 @@ def authorized_client(client, test_user):
     client.cookies.set("access_token", access_token)
     client.cookies.set("refresh_token", refresh_token)
     yield client
+
+@pytest.fixture(autouse=True)
+def mock_send_email():
+    with patch("backend.auth.email_utils.send_verification_email", new_callable=AsyncMock):
+        yield
 
 @pytest.fixture
 def test_hotel(test_db, test_user):
