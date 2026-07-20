@@ -21,6 +21,7 @@ jobs:
       VEREFI_EMAIL_URL: http://localhost
       REDIS_HOST: localhost
       REDIS_PORT: 6379
+      CELERY_BROKER_URL: redis://redis:6379/0
       MAIL_USERNAME: test@example.com
       MAIL_PASSWORD: test
       MAIL_FROM: test@example.com

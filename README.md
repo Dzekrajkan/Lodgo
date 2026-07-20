@@ -8,6 +8,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
+![CI](https://github.com/Dzekrajkan/Lodgo/actions/workflows/ci.yml/badge.svg)
 
 ## Table of Contents
 - [Overview](#overview)
@@ -16,6 +17,8 @@
 - [Project Structure](#project-structure)
 - [Quick Start (Demo)](#quick-start-demo)
 - [Production Deployment](#production-deployment)
+- [Makefile](#makefile)
+- [API Documentation](#api-documentation)
 
 ---
 
@@ -72,6 +75,13 @@ Lodgo/
 │   ├── reviews/            # create and list reviews
 │   │   ├── router.py
 │   │   └── schemas.py
+│   ├── tests/              # pytest test suite (auth, bookings, hotels, reviews, favorites)
+│   │   ├── conftest.py
+│   │   ├── test_auth.py
+│   │   ├── test_bookings.py
+│   │   ├── test_favorite.py
+│   │   ├── test_hotels.py
+│   │   └── test_reviews.py
 │   ├── alembic/            # database migrations
 │   ├── media/              # uploaded hotel and room images
 │   ├── main.py
@@ -100,10 +110,14 @@ Lodgo/
 │   ├── Dockerfile.prod         # production build
 │   ├── nginx.conf              # demo config (HTTP only)
 │   └── nginx.prod.conf         # production config (HTTP + certbot challenge)
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # runs tests on every push and pull request
 ├── docker-compose.yml          # production
 ├── docker-compose.demo.yml     # demo (quick start)
-├── .env                        # postgres credentials for docker-compose
-└── example.env                 # template
+├── Makefile                    # shortcuts for common commands
+├── pytest.ini                  # test configuration
+└── example.env
 ```
 
 ---
@@ -119,27 +133,23 @@ git clone https://github.com/Dzekrajkan/Lodgo
 cd Lodgo
 ```
 
-**2. Create the root `.env` file**
+**2. Create env files**
 
+On Mac/Linux:
+```bash
+make setup
+```
+
+On Windows (manually):
 ```bash
 cp example.env .env
+cp backend/example.env backend/.env
+cp frontend/example.env frontend/.env
 ```
 
 The default values in `example.env` work out of the box — no changes needed.
 
-**3. Create the backend `.env` file**
-
-```bash
-cp backend/example.env backend/.env
-```
-
-**4. Create the frontend `.env` file**
-
-```bash
-cp frontend/example.env frontend/.env
-```
-
-**5. Start the containers**
+**3. Start the containers**
 
 ```bash
 docker compose -f docker-compose.demo.yml up --build
@@ -151,16 +161,15 @@ That's it — the app will be available at `http://localhost`.
 
 > On startup, the container automatically runs Alembic migrations and seeds the database via `entrypoint.sh`. No manual steps needed.
 
-**Test accounts:**
+**Test account:**
 
 | Email | Password |
 |---|---|
 | `test@gmail.com` | `test1234` |
-| `alex@example.com` | `alex1234` |
 
 ---
 
-> **Email confirmation** — registration requires email confirmation. To enable it, fill in your mail credentials in `backend/.env`. Without this, use the test accounts above.
+> **Email confirmation** — registration requires email confirmation. To enable it, fill in your mail credentials in `backend/.env`. Without this, use the test account above.
 >
 > Gmail users: generate an App Password at [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) and use it as `MAIL_PASSWORD`.
 
@@ -175,9 +184,7 @@ For deploying on a VPS with a real domain and HTTPS via Let's Encrypt.
 ```bash
 git clone https://github.com/Dzekrajkan/Lodgo
 cd Lodgo
-cp example.env .env
-cp backend/example.env backend/.env
-cp frontend/example.env frontend/.env
+make setup
 ```
 
 Edit `.env` with your real Postgres credentials.
@@ -206,7 +213,7 @@ server_name yourdomain.com www.yourdomain.com;
 **3. Start the containers (HTTP only first)**
 
 ```bash
-docker compose up --build -d
+make up
 ```
 
 **4. Obtain SSL certificate**
@@ -286,3 +293,28 @@ docker compose up --build -d nginx
 The site is now running at `https://yourdomain.com`.
 
 > Certificates auto-renew every 12 hours via the `certbot` container.
+
+---
+
+## Makefile
+
+Available on Mac/Linux. On Windows use WSL.
+
+| Command | Description |
+|---|---|
+| `make setup` | Copy all example env files |
+| `make demo` | Start demo (quick start) |
+| `make up` | Start production containers |
+| `make down` | Stop all containers |
+| `make logs` | Stream logs from all containers |
+| `make test` | Run test suite |
+| `make shell` | Open shell inside backend container |
+
+---
+
+## API Documentation
+
+Interactive API docs are available after starting the backend:
+
+- Swagger UI — `http://localhost:8000/api/docs`
+- ReDoc — `http://localhost:8000/api/redoc`
